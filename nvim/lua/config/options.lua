@@ -29,7 +29,7 @@ vim.opt.splitright = true -- force vertical splits right of current window
 vim.opt.termguicolors = true -- enable term GUI colors
 vim.opt.timeoutlen = 1000 -- set timeout for mapped sequences
 vim.opt.undofile = true -- enable persistent undo
-vim.opt.updatetime = 100 -- set faster completion
+vim.opt.updatetime = 10 -- set faster completion
 vim.opt.writebackup = false -- prevent editing of files being edited elsewhere
 vim.opt.cursorline = true -- highlight current line
 
@@ -37,3 +37,6 @@ vim.opt.cursorline = true -- highlight current line
 vim.opt.hlsearch = true -- highlight all matches in search
 vim.opt.ignorecase = true -- ignore case in search
 vim.opt.smartcase = true -- match case if explicitly stated
+
+vim.o.timeoutlen = 250
+vim.o.ttimeoutlen = 10

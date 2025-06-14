@@ -12,7 +12,7 @@ return {
         config = function()
             -- ensure that we have lua language server, typescript launguage server, java language server, and java test language server are installed
             require("mason-lspconfig").setup({
-                ensure_installed = { "lua_ls", "ts_ls", "jdtls",  "html", "cssls", "clangd", "intelephense" },
+                ensure_installed = { "lua_ls","ts_ls", "jdtls",  "html", "cssls", "clangd", "intelephense", "shopify_liquid" },
             })
         end
     },
@@ -63,16 +63,38 @@ return {
                 capabilities = capabilities,
             })
 
-            lspconfig.intelephense.setup({
+            lspconfig.shopify_liquid.setup ({
                 capabilities = capabilities,
-                settings = {
-                    intelephense = {
-                        files = {
-                            maxSize = 5000000,
-                        },
-                    },
-                },
             })
+            --
+            --
+            -- lspconfig.intelephense.setup({
+            --     capabilities = capabilities,
+            --     settings = {
+            --         intelephense = {
+            --             files = {
+            --                 maxSize = 5000000,
+            --             },
+            --         },
+            --     },
+            --\ })
+            
+            local lspconfig = require("lspconfig")
+
+            lspconfig.shopify_theme_ls = {
+                default_config = {
+                    cmd = { "shopify", "theme", "language-server" },
+                    filetypes = { "liquid" },
+                    root_dir = lspconfig.util.root_pattern("config/settings_schema.json", ".git", "templates", "snippets"),
+                }
+            }
+
+
+            lspconfig.shopify_theme_ls.setup({
+                capabilities = capabilities,
+            })
+
+            require('lspconfig').phpactor.setup{}
 
             -- Set vim motion for <Space> + c + h to show code documentation about the code the cursor is currently over if available
             vim.keymap.set("n", "<leader>ch", vim.lsp.buf.hover, { desc = "[C]ode [H]over Documentation" })

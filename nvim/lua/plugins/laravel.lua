@@ -24,14 +24,23 @@ return {
     },
   },
 
-  -- Laravel Artisan support (optional)
+  -- mason-lspconfig to bridge mason and lspconfig
+  {
+    "williamboman/mason-lspconfig.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+    opts = {
+      ensure_installed = { "intelephense" },
+    },
+  },
+
+  -- Laravel Artisan support
   {
     "adalessa/laravel.nvim",
     cmd = { "Artisan" },
     opts = {},
   },
 
-  -- Snippet support with Laravel snippets
+  -- Snippet support
   {
     "L3MON4D3/LuaSnip",
     dependencies = { "rafamadriz/friendly-snippets" },
@@ -40,7 +49,7 @@ return {
     end,
   },
 
-  -- Autocompletion engine (nvim-cmp + luasnip)
+  -- Autocompletion engine
   {
     "hrsh7th/nvim-cmp",
     dependencies = {

@@ -5,4 +5,3 @@ vim.cmd [[
         autocmd FileType java lua require'config.jdtls'.setup_jdtls()
     augroup end
 ]]
-

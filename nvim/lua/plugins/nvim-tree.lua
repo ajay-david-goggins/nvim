@@ -4,7 +4,7 @@ return {
         vim.keymap.set('n', '<leader>e', "<cmd>NvimTreeToggle<CR>", {desc = "Toggle [E]xplorer"})
         require("nvim-tree").setup({
             view = {
-                width = 30, 
+                width = 50, 
                 side = "left",
                 number = true, 
                 relativenumber = true,

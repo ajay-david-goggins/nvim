@@ -29,20 +29,6 @@ vim.keymap.set("n", "<leader>wh", ":split<cr>", { desc = "[W]indow Split [H]oriz
 vim.keymap.set("v", "<", "<gv", { desc = "Indent left in visual mode" })
 vim.keymap.set("v", ">", ">gv", { desc = "Indent right in visual mode" })
 
--- 📋 Copy to Windows clipboard in visual mode
-vim.keymap.set("v", "<leader>y", "<cmd>w !clip.exe<CR><CR>", {
-  desc = "Copy selection to clipboard",
-  silent = true,
-  noremap = true,
-})
-
--- 📥 Paste from Windows clipboard in normal mode
-vim.keymap.set("n", "<leader>p", "<cmd>r !powershell.exe -command \"Get-Clipboard\"<CR>", {
-  desc = "Paste from clipboard",
-  silent = true,
-  noremap = true,
-})
-
 -- 💾 Save in insert mode
 vim.keymap.set("i", "<leader><leader>w", "<cmd>w<CR>", {
   desc = "Write the file (insert mode)",
@@ -99,3 +85,16 @@ vim.keymap.set("n", "<leader>qa!", "<cmd>qa!<CR>", {
   noremap = true,
 })
 
+-- 📋 Copy to Windows clipboard in visual mode
+vim.keymap.set("v", "<leader>y", "<cmd>w !clip.exe<CR><CR>", {
+  desc = "Copy selection to clipboard",
+  silent = true,
+  noremap = true,
+})
+
+-- 📥 Paste from Windows clipboard in normal mode
+vim.keymap.set("n", "<leader>p", "<cmd>r !powershell.exe -command \"Get-Clipboard\"<CR>", {
+  desc = "Paste from clipboard",
+  silent = true,
+  noremap = true,
+})

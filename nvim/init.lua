@@ -1,4 +1,3 @@
-vim.cmd[[filetype plugin indent on]]
 -- Declare the path where lazy will clone plugin code
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 

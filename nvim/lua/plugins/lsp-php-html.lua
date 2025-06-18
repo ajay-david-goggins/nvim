@@ -1,17 +1,40 @@
 return {
   {
     "neovim/nvim-lspconfig",
-    config = function()
-      local lspconfig = require("lspconfig")
+    opts = {
+      servers = {
+        -- PHP LSP: Intelephense (via global npm)
+        intelephense = {
+          cmd = { "intelephense", "--stdio" },
+          filetypes = { "php" },
+          root_dir = require("lspconfig.util").root_pattern("composer.json", ".git"),
+          settings = {
+            intelephense = {
+              files = {
+                maxSize = 5000000,
+              },
+            },
+          },
+        },
 
-      -- PHP LSP: intelephense
-      lspconfig.intelephense.setup({})
+        -- HTML LSP support
+        html = {
+          filetypes = { "html", "php" },
+        },
 
-      -- HTML LSP: also works inside PHP files
-      lspconfig.html.setup({
-        filetypes = { "html", "php" },
-      })
-    end,
+        -- Optional: Emmet for fast HTML/CSS-like editing
+        emmet_ls = {
+          filetypes = { "html", "php", "css", "javascriptreact", "typescriptreact" },
+          init_options = {
+            html = {
+              options = {
+                ["bem.enabled"] = true,
+              },
+            },
+          },
+        },
+      },
+    },
   },
 }
 

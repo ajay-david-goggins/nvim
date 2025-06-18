@@ -2,26 +2,67 @@ return {
     {
         "lewis6991/gitsigns.nvim",
         config = function()
-            -- setup gitsigns with default properties
             require("gitsigns").setup({})
 
-            -- Set a vim motion to <Space> + g + h to preview changes to the file under the cursor in normal mode
-            vim.keymap.set("n", "<leader>gh", ":Gitsigns preview_hunk<CR>", {desc="[G]it Preview [H]unk"})
-        end
+            local map = vim.keymap.set
+            local opts = { noremap = true, silent = true }
+
+            -- Preview current hunk
+            map("n", "<leader>gh", ":Gitsigns preview_hunk<CR>", { desc = "[G]it Preview [H]unk" })
+
+            -- Next/Previous Hunk
+            map("n", "<leader>gj", ":Gitsigns next_hunk<CR>", { desc = "[G]it Next Hunk" })
+            map("n", "<leader>gk", ":Gitsigns prev_hunk<CR>", { desc = "[G]it Prev Hunk" })
+
+            -- Stage / Undo Stage / Reset Hunk
+            map("n", "<leader>gs", ":Gitsigns stage_hunk<CR>", { desc = "[G]it [S]tage Hunk" })
+            map("n", "<leader>gu", ":Gitsigns undo_stage_hunk<CR>", { desc = "[G]it [U]ndo Stage" })
+            map("n", "<leader>gr", ":Gitsigns reset_hunk<CR>", { desc = "[G]it [R]eset Hunk" })
+
+            -- Stage whole buffer
+            map("n", "<leader>gS", ":Gitsigns stage_buffer<CR>", { desc = "[G]it Stage [B]uffer" })
+
+            -- Blame line
+            map("n", "<leader>gl", ":Gitsigns blame_line<CR>", { desc = "[G]it [L]ine Blame" })
+
+            -- Toggle blame & deleted lines
+            map("n", "<leader>gtb", ":Gitsigns toggle_current_line_blame<CR>", { desc = "Toggle Blame" })
+            map("n", "<leader>gtd", ":Gitsigns toggle_deleted<CR>", { desc = "Toggle Deleted" })
+        end,
     },
     {
         "tpope/vim-fugitive",
         config = function()
-            -- Set a vim motion to <Space> + g + b to view the most recent contributers to the file
-            vim.keymap.set("n", "<leader>gb", ":Git blame<cr>", {desc="[G]it [B]lame"})
-            -- Set a vim motion to <Space> + g + <Shift>A to all files changed to the staging area
-            vim.keymap.set("n", "<leader>gA", ":Git add .<cr>", {desc = "[G]it Add [A]ll"})
-            -- Set a vim motion to <Space> + g + a to add the current file and changes to the staging area
-            vim.keymap.set("n", "<leader>ga", "Git add", {desc = "[G]it [A]dd"})
-            -- Set a vim motion to <Space> + g + c to commit the current chages
-            vim.keymap.set("n", "<leader>gc", ":Git commit", {desc = "[G]it [C]ommit"})
-            -- Set a vim motion to <Space> + g + p to push the commited changes to the remote repository
-            vim.keymap.set("n", "<leader>gp", "Git push", {desc = "[G]it [P]ush"})
-        end
-    }
+            local map = vim.keymap.set
+            local opts = { noremap = true, silent = true }
+
+            -- Git status (like `git status`)
+            map("n", "<leader>gs", ":Git<CR>", { desc = "[G]it [S]tatus" })
+
+            -- Git diff
+            map("n", "<leader>gd", ":Gvdiffsplit<CR>", { desc = "[G]it [D]iff Split" })
+
+            -- Blame current file
+            map("n", "<leader>gb", ":Git blame<CR>", { desc = "[G]it [B]lame" })
+
+            -- Add current file
+            map("n", "<leader>ga", ":Git add %<CR>", { desc = "[G]it [A]dd Current" })
+
+            -- Add all files
+            map("n", "<leader>gA", ":Git add .<CR>", { desc = "[G]it Add [A]ll" })
+
+            -- Commit
+            map("n", "<leader>gc", ":Git commit<CR>", { desc = "[G]it [C]ommit" })
+
+            -- Push
+            map("n", "<leader>gp", ":Git push<CR>", { desc = "[G]it [P]ush" })
+
+            -- Pull
+            map("n", "<leader>gP", ":Git pull<CR>", { desc = "[G]it [P]ull" })
+
+            -- Git log
+            map("n", "<leader>glg", ":Git log<CR>", { desc = "[G]it [L]o[G]" })
+        end,
+    },
 }
+

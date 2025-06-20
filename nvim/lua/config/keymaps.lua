@@ -98,3 +98,8 @@ vim.keymap.set("n", "<leader>p", "<cmd>r !powershell.exe -command \"Get-Clipboar
   silent = true,
   noremap = true,
 })
+
+vim.keymap.set("n", "<A-z>", function()
+    vim.wo.wrap = not vim.wo.wrap
+end, { desc = "Toggle Word Wrap (Alt + z)", silent = true })
+

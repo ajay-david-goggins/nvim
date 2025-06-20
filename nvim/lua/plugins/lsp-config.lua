@@ -11,11 +11,12 @@ return {
             require("mason-lspconfig").setup({
                 ensure_installed = {
                     "lua_ls",        -- Lua
-                    "ts_ls",         -- JavaScript/TypeScript (corrected)
+                    "ts_ls",         -- JavaScript/TypeScript (your original)
                     "jdtls",         -- Java
                     "html",          -- HTML
                     "cssls",         -- CSS
-                    "clangd"         -- C/C++
+                    "clangd",        -- C/C++
+                    "emmet_ls"       -- ✅ Added Emmet LSP
                 },
             })
         end
@@ -41,11 +42,32 @@ return {
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
             lspconfig.lua_ls.setup({ capabilities = capabilities })
-            lspconfig.ts_ls.setup({ capabilities = capabilities })  -- ✅ using ts_ls
+            lspconfig.ts_ls.setup({ capabilities = capabilities })  -- ✅ using ts_ls as you did
             lspconfig.html.setup({ capabilities = capabilities })
             lspconfig.cssls.setup({ capabilities = capabilities })
             lspconfig.clangd.setup({ capabilities = capabilities })
 
+            -- ✅ Emmet LSP setup (just added)
+            lspconfig.emmet_ls.setup({
+                capabilities = capabilities,
+                filetypes = {
+                    "html",
+                    "css",
+                    "php",
+                    "blade",
+                    "javascriptreact",
+                    "typescriptreact"
+                },
+                init_options = {
+                    html = {
+                        options = {
+                            ["bem.enabled"] = true
+                        }
+                    }
+                }
+            })
+
+            -- LSP Keymaps
             vim.keymap.set("n", "<leader>ch", vim.lsp.buf.hover, { desc = "[C]ode [H]over Documentation" })
             vim.keymap.set("n", "<leader>cd", vim.lsp.buf.definition, { desc = "[C]ode Goto [D]efinition" })
             vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ctions" })

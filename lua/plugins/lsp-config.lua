@@ -13,14 +13,15 @@ return {
         config = function()
             require("mason-lspconfig").setup({
                 ensure_installed = {
-                    "lua_ls",        -- Lua
-                    "ts_ls",      -- JavaScript/TypeScript
-                    "jdtls",         -- Java
-                    "html",          -- HTML
-                    "cssls",         -- CSS
-                    "clangd",        -- C/C++
-                    "emmet_ls"       -- Emmet
-                    -- ✨ angularls is NOT managed here
+                    "lua_ls",
+                    "ts_ls",       -- ✅ KEEP this
+                    "jdtls",
+                    "html",
+                    "cssls",
+                    "clangd",
+                    "emmet_ls",
+                    "angularls",
+                    "eslint",      -- ✅ ESLint LSP
                 },
             })
         end,
@@ -50,20 +51,22 @@ return {
         config = function()
             local lspconfig = require("lspconfig")
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
+            local util = require("lspconfig.util")
 
             -- Standard LSPs
             lspconfig.lua_ls.setup({ capabilities = capabilities })
-            lspconfig.ts_ls.setup({ capabilities = capabilities }) -- ts_ls (not ts_ls)
+            lspconfig.ts_ls.setup({ capabilities = capabilities })
             lspconfig.html.setup({ capabilities = capabilities })
             lspconfig.cssls.setup({ capabilities = capabilities })
             lspconfig.clangd.setup({ capabilities = capabilities })
 
-            -- Emmet LSP
+            -- Emmet
             lspconfig.emmet_ls.setup({
                 capabilities = capabilities,
                 filetypes = {
                     "html", "css", "php", "blade",
-                    "javascriptreact", "typescriptreact"
+                    "javascriptreact", "typescriptreact",
+                    "astro", "vue", "svelte",
                 },
                 init_options = {
                     html = {
@@ -74,26 +77,45 @@ return {
                 }
             })
 
+            -- Angular
             lspconfig.angularls.setup({
                 capabilities = capabilities,
-                cmd = {
-                    "ngserver",
-                    "--stdio",
-                    "--tsProbeLocations", "/usr/lib/node_modules",
-                    "--ngProbeLocations", "/usr/lib/node_modules"
-                },
-                on_new_config = function(new_config, new_root_dir)
-                    new_config.cmd = {
-                        "ngserver",
-                        "--stdio",
-                        "--tsProbeLocations", "/usr/lib/node_modules",
-                        "--ngProbeLocations", "/usr/lib/node_modules"
+                root_dir = util.root_pattern("angular.json", "package.json", "nx.json", ".git"),
+                filetypes = { "typescript", "html", "scss", "css" },
+                settings = {
+                    angular = {
+                        strictTemplates = true
                     }
-                end,
-                root_dir = require("lspconfig").util.root_pattern("angular.json", "project.json", ".git"),
-                filetypes = { "typescript", "html" },
+                }
             })
-            -- 🔑 Keybindings
+
+            -- ESLint with flat config support
+            lspconfig.eslint.setup({
+                capabilities = capabilities,
+                on_attach = function(_, bufnr)
+                    vim.api.nvim_create_autocmd("BufWritePre", {
+                        buffer = bufnr,
+                        command = "EslintFixAll", -- Requires eslint.nvim or formatter
+                    })
+                end,
+                settings = {
+                    workingDirectory = { mode = "auto" },
+                    experimental = {
+                        useFlatConfig = true, -- ✅ For eslint.config.mjs
+                    },
+                },
+                root_dir = util.root_pattern(
+                    "eslint.config.mjs",
+                    ".eslintrc",
+                    ".eslintrc.js",
+                    ".eslintrc.json",
+                    ".eslintrc.cjs",
+                    "package.json",
+                    ".git"
+                ),
+            })
+
+            -- LSP Keymaps
             vim.keymap.set("n", "<leader>ch", vim.lsp.buf.hover, { desc = "[C]ode [H]over" })
             vim.keymap.set("n", "<leader>cd", vim.lsp.buf.definition, { desc = "[C]ode [D]efinition" })
             vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })

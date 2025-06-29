@@ -56,7 +56,7 @@ return {
 
             vim.keymap.set('n', '<leader>gf', function()
                 builtin.find_files({
-                    cwd = home_dir,
+                    cwd = '/home/ajay/',
                     hidden = true,
                     prompt_title = "Global File Search (/root)"
                 })

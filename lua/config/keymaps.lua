@@ -109,3 +109,4 @@ vim.keymap.set("n", "<A-l>", ":vertical resize +2<CR>", { desc = "Resize split r
 vim.keymap.set("n", "<A-j>", ":resize +2<CR>", { desc = "Resize split down", silent = true })
 vim.keymap.set("n", "<A-k>", ":resize -2<CR>", { desc = "Resize split up", silent = true })
  
+vim.keymap.set("n", "<leader>tt", ":belowright split | resize 10 | terminal<CR>", { desc = "Tiny Terminal", silent = true })

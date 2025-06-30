@@ -43,7 +43,7 @@ return {
       map("n", "<leader>gs", ":Git<CR>", { desc = "[G]it [S]tatus", silent = true })
       map("n", "<leader>gd", ":Gvdiffsplit<CR>", { desc = "[G]it [D]iff Split", silent = true })
       map("n", "<leader>gb", ":Git blame<CR>", { desc = "[G]it [B]lame", silent = true })
-      map("n", "<leader>ga", ":Git add %<CR>", { desc = "[G]it [A]dd Current", silent = true })
+      map("n", "<leader>ga", ":Git add %<CR>", { desc = "[G]it [C]dd Current", silent = true })
       map("n", "<leader>gA", ":Git add .<CR>", { desc = "[G]it Add [A]ll", silent = true })
       map("n", "<leader>gc", ":Git commit<CR>", { desc = "[G]it [C]ommit", silent = true })
       map("n", "<leader>gp", ":Git push<CR>", { desc = "[G]it [P]ush", silent = true })

@@ -1,17 +1,17 @@
 return {
     {
         'nvim-telescope/telescope.nvim',
-        tag = '0.1.6',
+        version = false, -- ✅ Always use latest to avoid deprecated APIs
         dependencies = {
-            'nvim-lua/plenary.nvim'
+            'nvim-lua/plenary.nvim',
         },
         config = function()
+            local telescope = require('telescope')
             local builtin = require('telescope.builtin')
-            local actions = require("telescope.actions")
-            local home_dir = vim.fn.getenv("HOME") -- typically /root in WSL
+            local actions = require('telescope.actions')
+            local home_dir = vim.fn.getenv("HOME")
 
-            -- Set up Telescope
-            require("telescope").setup({
+            telescope.setup({
                 defaults = {
                     prompt_prefix = "🔍 ",
                     selection_caret = "👉 ",
@@ -32,10 +32,10 @@ return {
                             ["<C-p>"] = actions.cycle_history_prev,
                             ["<C-j>"] = actions.move_selection_next,
                             ["<C-k>"] = actions.move_selection_previous,
-                            ["<C-l>"] = actions.select_default, 
-                        }
-                    }
-                }
+                            ["<C-l>"] = actions.select_default,
+                        },
+                    },
+                },
             })
 
             -- Enable line numbers in preview pane
@@ -47,7 +47,7 @@ return {
                 end,
             })
 
-            -- Mappings
+            -- Key mappings
             vim.keymap.set('n', '<leader>ff', function()
                 builtin.find_files({ hidden = true })
             end, { desc = "[F]ind [F]iles (local + dotfiles)" })
@@ -58,14 +58,14 @@ return {
                 builtin.find_files({
                     cwd = '/home/ajay/',
                     hidden = true,
-                    prompt_title = "Global File Search (/root)"
+                    prompt_title = "Global File Search (/root)",
                 })
             end, { desc = "[G]lobal [F]ile search (with dotfiles)" })
 
             vim.keymap.set('n', '<leader>ggf', function()
                 builtin.live_grep({
                     cwd = home_dir,
-                    prompt_title = "Global Grep Search (/root)"
+                    prompt_title = "Global Grep Search (/root)",
                 })
             end, { desc = "[G]lobal [G]rep [F]ind" })
 
@@ -73,14 +73,14 @@ return {
             vim.keymap.set('n', '<leader>fr', builtin.resume, { desc = '[F]inder [R]esume' })
             vim.keymap.set('n', '<leader>f.', builtin.oldfiles, { desc = '[F]ind Recent Files' })
             vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = '[F]ind Existing [B]uffers' })
-        end
+        end,
     },
 
     {
         'nvim-telescope/telescope-ui-select.nvim',
         config = function()
             require("telescope").load_extension("ui-select")
-        end
-    }
+        end,
+    },
 }
 

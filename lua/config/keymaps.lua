@@ -44,7 +44,7 @@ vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", {
 })
 
 -- 💾 Save and quit
-vim.keymap.set("n", "<leader>wq", "<cmd>wq<CR>", {
+vim.keymap.set("n","<leader>wq", "<cmd>wq<CR>", {
   desc = "Write and quit",
   silent = true,
   noremap = true,
@@ -103,3 +103,9 @@ vim.keymap.set("n", "<A-z>", function()
     vim.wo.wrap = not vim.wo.wrap
 end, { desc = "Toggle Word Wrap (Alt + z)", silent = true })
 
+-- Resize splits using Alt + hjkl
+vim.keymap.set("n", "<A-h>", ":vertical resize -2<CR>", { desc = "Resize split left", silent = true })
+vim.keymap.set("n", "<A-l>", ":vertical resize +2<CR>", { desc = "Resize split right", silent = true })
+vim.keymap.set("n", "<A-j>", ":resize +2<CR>", { desc = "Resize split down", silent = true })
+vim.keymap.set("n", "<A-k>", ":resize -2<CR>", { desc = "Resize split up", silent = true })
+ 

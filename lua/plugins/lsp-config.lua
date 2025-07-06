@@ -14,14 +14,13 @@ return {
             require("mason-lspconfig").setup({
                 ensure_installed = {
                     "lua_ls",
-                    "ts_ls",       -- ✅ KEEP this
+                    "ts_ls",
                     "jdtls",
                     "html",
                     "cssls",
                     "clangd",
                     "emmet_ls",
-                    "angularls",
-                    "eslint",      -- ✅ ESLint LSP
+                    "eslint", -- ✅ LSP for ESLint
                 },
             })
         end,
@@ -55,7 +54,7 @@ return {
 
             -- Standard LSPs
             lspconfig.lua_ls.setup({ capabilities = capabilities })
-            lspconfig.ts_ls.setup({ capabilities = capabilities })
+            lspconfig.ts_ls.setup({ capabilities = capabilities }) -- renamed from ts_ls
             lspconfig.html.setup({ capabilities = capabilities })
             lspconfig.cssls.setup({ capabilities = capabilities })
             lspconfig.clangd.setup({ capabilities = capabilities })
@@ -77,36 +76,49 @@ return {
                 }
             })
 
-            -- Angular
+            -- Angular LSP (Local ngserver)
             lspconfig.angularls.setup({
                 capabilities = capabilities,
                 root_dir = util.root_pattern("angular.json", "package.json", "nx.json", ".git"),
                 filetypes = { "typescript", "html", "scss", "css" },
+                cmd = {
+                    "node",
+                    "./node_modules/@angular/language-server/bin/ngserver.js",
+                    "--stdio",
+                    "--tsProbeLocations", "./node_modules",
+                    "--ngProbeLocations", "./node_modules",
+                },
+                on_new_config = function(new_config, new_root_dir)
+                    new_config.cmd_env = {
+                        PATH = "/usr/bin:" .. os.getenv("PATH"),
+                    }
+                end,
                 settings = {
                     angular = {
-                        strictTemplates = true
+                        strictTemplates = true,
                     }
-                }
+                },
             })
 
-            -- ESLint with flat config support
+            -- ✅ ESLint via LSP (no more eslint_d / null-ls)
             lspconfig.eslint.setup({
                 capabilities = capabilities,
                 on_attach = function(_, bufnr)
                     vim.api.nvim_create_autocmd("BufWritePre", {
                         buffer = bufnr,
-                        command = "EslintFixAll", -- Requires eslint.nvim or formatter
+                        command = "EslintFixAll",
                     })
                 end,
                 settings = {
-                    workingDirectory = { mode = "auto" },
                     experimental = {
-                        useFlatConfig = true, -- ✅ For eslint.config.mjs
+                        useFlatConfig = true,
+                    },
+                    workingDirectory = {
+                        mode = "auto",
                     },
                 },
                 root_dir = util.root_pattern(
                     "eslint.config.mjs",
-                    ".eslintrc",
                     ".eslintrc.js",
                     ".eslintrc.json",
                     ".eslintrc.cjs",

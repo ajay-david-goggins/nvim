@@ -31,8 +31,8 @@ return {
           end
 
           -- 🔁 Hunk navigation
-          map("n", "<leader>gn", gs.next_hunk, "[G]it [N]ext Hunk")
-          map("n", "<leader>gp", gs.prev_hunk, "[G]it [P]revious Hunk")
+          map("n", "<leader>ghn", gs.next_hunk, "[G]it [N]ext [H]unk")
+          map("n", "<leader>ghp", gs.prev_hunk, "[G]it [P]revious [H]unk")
           map("n", "<leader>gh", gs.preview_hunk, "[G]it Preview [H]unk")
 
 

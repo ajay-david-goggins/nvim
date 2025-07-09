@@ -1,4 +1,4 @@
--- Set our leader keybinding to space
+--Set our leader keybinding to space
 -- Anywhere you see <leader> in a keymapping specifies the space key
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
@@ -67,6 +67,9 @@ vim.keymap.set("n", "<leader>wqa", "<cmd>wqa<CR>", {
     noremap = true,
 })
 
+vim.keymap.set("n", "<leader>cm", vim.diagnostic.open_float, {desc = "[C]ode [M]essage"})
+
+>>>>>>> ef34c15 (sucks)
 -- 📋 Copy to Windows clipboard in visual mode
 vim.keymap.set("v", "<leader>y", "<cmd>w !clip.exe<CR><CR>", {
     desc = "Copy selection to clipboard",
@@ -97,3 +100,14 @@ vim.keymap.set("n", "<leader>ce", function()
     -- require("eslint").setup() // don't do this 
 end, { desc = "Create ESLint config" })
 
+vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
+  pattern = "*",
+  callback = function()
+    if vim.bo.modified and vim.bo.modifiable then
+      vim.cmd("silent! write")
+    end
+  end,
+})
+
+-- Like windows 10 ctrl + a 
+vim.keymap.set("n", "<leader>a", "ggVG", { desc = "Select All" })

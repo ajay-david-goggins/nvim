@@ -85,7 +85,7 @@ return {
 
       -- 🌱 Branching
       map("n", "<leader>gcb", ":Git checkout -b ", { desc = "[G]it [C]reate [B]ranch" })
-      map("n", "<leader>gco", ":Git checkout ", { desc = "[G]it [C]heckout Branch" })
+      map("n", "<leader>gco", ":Git checkout ", { desc = "[G]it [C]heck[o]ut Branch" })
       map("n", "<leader>gmb", ":Git merge ", { desc = "[G]it [M]erge [B]ranch" })
     end,
   },

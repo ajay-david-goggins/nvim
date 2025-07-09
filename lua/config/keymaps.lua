@@ -59,30 +59,10 @@ vim.keymap.set("n", "<leader>q", "<cmd>q<CR>", {
     noremap = true,
 })
 
--- ❌ Force quit
-vim.keymap.set("n", "<leader>q!", "<cmd>q!<CR>", {
-    desc = "Force quit file",
-    silent = true,
-    noremap = true,
-})
 
 -- 💾 Save and quit all
 vim.keymap.set("n", "<leader>wqa", "<cmd>wqa<CR>", {
     desc = "Write and quit all",
-    silent = true,
-    noremap = true,
-})
-
--- 💥 Force save and quit all
-vim.keymap.set("n", "<leader>wqa!", "<cmd>wqa!<CR>", {
-    desc = "Force write and quit all",
-    silent = true,
-    noremap = true,
-})
-
--- ❌ Force quit all
-vim.keymap.set("n", "<leader>qa!", "<cmd>qa!<CR>", {
-    desc = "Force quit all",
     silent = true,
     noremap = true,
 })

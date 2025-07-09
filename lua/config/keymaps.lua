@@ -36,6 +36,8 @@ vim.keymap.set("i", "<leader><leader>w", "<cmd>w<CR>", {
     noremap = true,
 })
 
+vim.keymap.set("n","<leader>cm", vim.diagnostic.open_float,{ desc = "[C]ode [M]essage" })
+ 
 -- 💾 Save in normal mode
 vim.keymap.set("n", "<leader>w", "<cmd>w<CR>", {
     desc = "Write the file",

@@ -69,7 +69,6 @@ vim.keymap.set("n", "<leader>wqa", "<cmd>wqa<CR>", {
 
 vim.keymap.set("n", "<leader>cm", vim.diagnostic.open_float, {desc = "[C]ode [M]essage"})
 
->>>>>>> ef34c15 (sucks)
 -- 📋 Copy to Windows clipboard in visual mode
 vim.keymap.set("v", "<leader>y", "<cmd>w !clip.exe<CR><CR>", {
     desc = "Copy selection to clipboard",
@@ -98,7 +97,21 @@ vim.keymap.set("n", "<leader>tt", ":belowright split | resize 10 | terminal<CR>"
 
 vim.keymap.set("n", "<leader>ce", function()
     -- require("eslint").setup() // don't do this 
-end, { desc = "Create ESLint config" })
+end, { desc = "Create ESLint config" })-- 💥 Force save and quit all
+vim.keymap.set("n", "<leader>wqa!", "<cmd>wqa!<CR>", {
+    desc = "Force write and quit all",
+    silent = true,
+    noremap = true,
+})
+
+-- ❌ Force quit all
+vim.keymap.set("n", "<leader>qa!", "<cmd>qa!<CR>", {
+    desc = "Force quit all",
+    silent = true,
+    noremap = true,
+})
+
+
 
 vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
   pattern = "*",

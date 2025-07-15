@@ -1,6 +1,6 @@
-return {
+    return {
     -----------------------------------------------------------------------------
-    -- 🔍 Git signs, hunk preview & line blame
+    -- === Git signs, hunk preview & line blame ===
     -----------------------------------------------------------------------------
     {
         "lewis6991/gitsigns.nvim",
@@ -28,23 +28,23 @@ return {
                         vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = desc, silent = true })
                     end
 
-                    -- 🔁 Hunk navigation
+                    -- === Hunk navigation ===
                     map("n", "<leader>ghn", gs.next_hunk, "[G]it [N]ext [H]unk")
                     map("n", "<leader>ghp", gs.prev_hunk, "[G]it [P]revious [H]unk")
                     map("n", "<leader>gh", gs.preview_hunk, "[G]it Preview [H]unk")
 
-                    -- 🔝 First/Last Hunk
+                    -- === First/Last Hunk ===
                     map("n", "<leader>g1", function() vim.cmd("1") gs.next_hunk() end, "[G]o to First Hunk")
                     map("n", "<leader>g9", function() vim.cmd("normal G") gs.prev_hunk() end, "[G]o to Last Hunk")
 
-                    -- ✅ Stage / Reset / Undo
+                    -- === Stage / Reset / Undo ===
                     map("n", "<leader>gs", gs.stage_hunk, "[G]it [S]tage Hunk")
                     map("v", "<leader>gs", ":Gitsigns stage_hunk<CR>", "[G]it [S]tage Hunk (Visual)")
                     map("n", "<leader>gus", gs.undo_stage_hunk, "[G]it [U]ndo [S]tage")
                     map("n", "<leader>grh", gs.reset_hunk, "[G]it [R]eset [H]unk")
                     map("n", "<leader>gsb", gs.stage_buffer, "[G]it [S]tage [B]uffer")
 
-                    -- 📌 Blame and toggle
+                    -- === Blame and toggle ===
                     map("n", "<leader>glb", gs.blame_line, "[G]it [L]ine [B]lame")
                     map("n", "<leader>gtb", gs.toggle_current_line_blame, "[G]it [T]oggle [B]lame")
                     map("n", "<leader>gtd", gs.toggle_deleted, "[G]it [T]oggle [D]eleted")
@@ -53,8 +53,7 @@ return {
             })
         end,
     },
-
-    -----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
     -- 🧠 Git CLI Commands - Fugitive
     -----------------------------------------------------------------------------
     {

@@ -41,3 +41,10 @@ vim.opt.smartcase = true -- match case if explicitly stated
 
 vim.o.timeoutlen = 250
 vim.o.ttimeoutlen = 10
+
+-- 🔵 Set current line number to sky blue
+vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#87ceeb", bold = true })
+
+-- ⚪ Set all other line numbers to white
+vim.api.nvim_set_hl(0, "LineNr", { fg = "#ffffff" })
+

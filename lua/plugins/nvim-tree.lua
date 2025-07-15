@@ -1,30 +1,37 @@
 return {
-    "nvim-tree/nvim-tree.lua",
-    config = function()
-        vim.keymap.set('n', '<leader>e', "<cmd>NvimTreeToggle<CR>", {desc = "Toggle [E]xplorer"})
+  "nvim-tree/nvim-tree.lua",
+  config = function()
+    vim.keymap.set('n', '<leader>e', "<cmd>NvimTreeToggle<CR>", { desc = "Toggle [E]xplorer" })
 
-        require("nvim-tree").setup({
-            view = {
-                width = 50,
-                side = "left",
-                number = true,
-                relativenumber = true,
-            },
-            hijack_netrw = true,
-            auto_reload_on_write = true,
-        })
+    require("nvim-tree").setup({
+      view = {
+        width = 50,
+        side = "left",
+        number = true,
+        relativenumber = true,
+      },
+      renderer = {
+        indent_markers = {
+          enable = true, -- 👈 this shows the connector lines
+        },
+      },
+      hijack_netrw = true,
+      auto_reload_on_write = true,
+    })
 
-        -- 🔵 Current line number in SkyBlue
-        vim.api.nvim_set_hl(0, "NvimTreeCursorLineNr", { fg = "#87ceeb", bold = true })  -- SkyBlue
+    -- ✅ Auto color setup when NvimTree is opened
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "NvimTree",
+      callback = function()
+        -- 🔵 Line number colors
+        vim.cmd("highlight NvimTreeLineNr guifg=#FFFFFF guibg=NONE")        -- White normal number
+        vim.cmd("highlight NvimTreeCursorLineNr guifg=#87CEEB guibg=NONE")  -- Sky blue for current line number
+        vim.cmd("highlight NvimTreeCursorLine guibg=#2C2C2C")               -- Optional: dark bg for current line
 
-        -- ⚪ All other numbers in White
-        vim.api.nvim_set_hl(0, "NvimTreeLineNr", { fg = "#ffffff" })
-
-        -- Optional: Highlight full line under cursor
-        vim.cmd [[
-            autocmd FileType NvimTree setlocal cursorline
-        ]]
-        vim.api.nvim_set_hl(0, "CursorLine", { bg = "#2a2a2a" }) -- Customize if needed
-    end
+        -- ⚪ Connector color (│ ├─ └─ lines)
+        vim.cmd("highlight NvimTreeIndentMarker guifg=#FFFFFF")             -- Make connector lines white
+      end,
+    })
+  end,
 }
 

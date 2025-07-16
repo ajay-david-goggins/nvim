@@ -48,3 +48,10 @@ vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#87ceeb", bold = true })
 -- ⚪ Set all other line numbers to white
 vim.api.nvim_set_hl(0, "LineNr", { fg = "#ffffff" })
 
+vim.cmd [[
+  highlight LineNr guifg=#ffffff
+  highlight LineNrAbove guifg=#ffffff
+  highlight LineNrBelow guifg=#ffffff
+  highlight CursorLineNr guifg=#00BFFF gui=bold
+]]
+

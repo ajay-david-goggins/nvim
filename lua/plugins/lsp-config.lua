@@ -1,50 +1,60 @@
+-- ~/.config/nvim/lua/plugins/lsp-config.lua
+-- This file should be returned as a table of plugin specifications for lazy.nvim
+
 return {
     -- Mason Installer
+    -- Using 'opts = {}' for lazy.nvim's automatic setup
     {
-        "williamboman/mason.nvim",
-        config = function()
-            require("mason").setup()
-        end,
+        "mason-org/mason.nvim", -- Official repository for mason.nvim
+        opts = {}, -- Empty opts table tells lazy.nvim to call require("mason").setup()
     },
 
     -- Mason LSP Installer
+    -- IMPORTANT: Pinned to v1.9.0 for compatibility with Neovim v0.10.4
     {
-        "williamboman/mason-lspconfig.nvim",
-        config = function()
-            require("mason-lspconfig").setup({
-                ensure_installed = {
-                    "lua_ls",
-                    "ts_ls",
-                    "jdtls",
-                    "html",
-                    "cssls",
-                    "clangd",
-                    "emmet_ls",
-                    "eslint", -- ✅ LSP for ESLint
-                },
-            })
-        end,
-    },
-
-    -- DAP Support
-    {
-        "jay-babu/mason-nvim-dap.nvim",
-        config = function()
-            require("mason-nvim-dap").setup({
-                ensure_installed = { "java-debug-adapter", "java-test" }
-            })
-        end,
-    },
-
-    -- Java LSP (JDTLS)
-    {
-        "mfussenegger/nvim-jdtls",
+        "mason-org/mason-lspconfig.nvim", -- Official repository for mason-lspconfig.nvim
+        tag = "v1.9.0", -- <--- THIS IS THE CRUCIAL CHANGE for Neovim v0.10.4 compatibility
+        opts = {
+            ensure_installed = {
+                "lua_ls",
+                "ts_ls",
+                "jdtls",
+                "html",
+                "cssls",
+                -- "clangd", -- Keep commented out if you don't want Mason to manage clangd installation
+                "emmet_ls",
+                "eslint",
+            },
+            -- 'automatic_enable = true' is the default for v1.x.x as well,
+            -- so you don't strictly need to define it unless disabling or customizing.
+            -- automatic_enable = true,
+        },
         dependencies = {
-            "mfussenegger/nvim-dap",
+            -- Explicitly declare mason.nvim as a dependency for mason-lspconfig.nvim
+            { "mason-org/mason.nvim", opts = {} },
+            -- Explicitly declare nvim-lspconfig as a dependency
+            "neovim/nvim-lspconfig",
         },
     },
 
-    -- LSP Setup
+    -- DAP Support (Mason-based)
+    {
+        "jay-babu/mason-nvim-dap.nvim",
+        opts = { -- Use opts for setup
+            ensure_installed = { "java-debug-adapter", "java-test" }
+        }
+    },
+
+    -- Java LSP (JDTLS) - This plugin does not typically have a .setup() call on its own,
+    -- but rather is configured via nvim-lspconfig.
+    {
+        "mfussenegger/nvim-jdtls",
+        dependencies = {
+            "mfussenegger/nvim-dap", -- Assuming this is needed for JDTLS's DAP integration
+        },
+    },
+
+    -- LSP Setup (nvim-lspconfig)
     {
         "neovim/nvim-lspconfig",
         config = function()
@@ -54,10 +64,16 @@ return {
 
             -- Standard LSPs
             lspconfig.lua_ls.setup({ capabilities = capabilities })
-            lspconfig.ts_ls.setup({ capabilities = capabilities }) -- renamed from ts_ls
+            lspconfig.ts_ls.setup({ capabilities = capabilities })
             lspconfig.html.setup({ capabilities = capabilities })
             lspconfig.cssls.setup({ capabilities = capabilities })
-            lspconfig.clangd.setup({ capabilities = capabilities })
+
+            -- Clangd setup (uncommented and consolidated for direct lspconfig setup)
+            lspconfig.clangd.setup({
+                cmd = { "clangd" }, -- This uses your globally installed clangd (or one installed by Mason if you add "clangd" to ensure_installed)
+                filetypes = { "c", "cpp", "objc", "objcpp" },
+                root_dir = lspconfig.util.root_pattern("compile_commands.json", "compile_flags.txt", ".git"),
+            })
 
             -- Emmet
             lspconfig.emmet_ls.setup({
@@ -88,7 +104,7 @@ return {
                     "--tsProbeLocations", "./node_modules",
                     "--ngProbeLocations", "./node_modules",
                 },
-                on_new_config = function(new_config, new_root_dir)
+                on_new_config = function(new_config)
                     new_config.cmd_env = {
                         PATH = "/usr/bin:" .. os.getenv("PATH"),
                     }

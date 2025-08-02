@@ -14,19 +14,20 @@ return {
             require("mason-lspconfig").setup({
                 ensure_installed = {
                     "lua_ls",
-                    "ts_ls",
-                    "jdtls",
+                    "ts_ls", -- ✅ correct name for TypeScript
                     "html",
                     "cssls",
-                    "clangd",
                     "emmet_ls",
-                    "eslint", -- ✅ LSP for ESLint
+                    "eslint",
+                    "clangd",
+                    "jdtls",
+                    "tailwindcss", -- ✅ NEW: Tailwind CSS LSP for class name suggestions
                 },
             })
         end,
     },
 
-    -- DAP Support
+    -- Mason DAP Installer
     {
         "jay-babu/mason-nvim-dap.nvim",
         config = function()
@@ -44,7 +45,7 @@ return {
         },
     },
 
-    -- LSP Setup
+    -- LSP Config
     {
         "neovim/nvim-lspconfig",
         config = function()
@@ -52,14 +53,25 @@ return {
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
             local util = require("lspconfig.util")
 
-            -- Standard LSPs
+            -- Common LSPs
             lspconfig.lua_ls.setup({ capabilities = capabilities })
-            lspconfig.ts_ls.setup({ capabilities = capabilities }) -- renamed from ts_ls
+            lspconfig.ts_ls.setup({ capabilities = capabilities })
             lspconfig.html.setup({ capabilities = capabilities })
             lspconfig.cssls.setup({ capabilities = capabilities })
             lspconfig.clangd.setup({ capabilities = capabilities })
 
-            -- Emmet
+            -- ✅ Tailwind CSS - enables class name autocomplete (even custom classes)
+            lspconfig.tailwindcss.setup({
+                capabilities = capabilities,
+                root_dir = util.root_pattern("tailwind.config.js", "postcss.config.js", "package.json", ".git"),
+                filetypes = {
+                    "html", "javascript", "javascriptreact",
+                    "typescript", "typescriptreact", "php",
+                    "blade", "vue", "svelte",
+                },
+            })
+
+            -- ✅ Emmet for rapid HTML/CSS/React/Angular editing
             lspconfig.emmet_ls.setup({
                 capabilities = capabilities,
                 filetypes = {
@@ -70,13 +82,13 @@ return {
                 init_options = {
                     html = {
                         options = {
-                            ["bem.enabled"] = true
-                        }
-                    }
-                }
+                            ["bem.enabled"] = true,
+                        },
+                    },
+                },
             })
 
-            -- Angular LSP (Local ngserver)
+            -- ✅ Angular LSP (Local ngserver)
             lspconfig.angularls.setup({
                 capabilities = capabilities,
                 root_dir = util.root_pattern("angular.json", "package.json", "nx.json", ".git"),
@@ -96,11 +108,11 @@ return {
                 settings = {
                     angular = {
                         strictTemplates = true,
-                    }
+                    },
                 },
             })
 
-            -- ✅ ESLint via LSP (no more eslint_d / null-ls)
+            -- ✅ ESLint
             lspconfig.eslint.setup({
                 capabilities = capabilities,
                 on_attach = function(_, bufnr)
@@ -127,7 +139,7 @@ return {
                 ),
             })
 
-            -- LSP Keymaps
+            -- ✅ LSP Keymaps
             vim.keymap.set("n", "<leader>ch", vim.lsp.buf.hover, { desc = "[C]ode [H]over" })
             vim.keymap.set("n", "<leader>cd", vim.lsp.buf.definition, { desc = "[C]ode [D]efinition" })
             vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, { desc = "[C]ode [A]ction" })

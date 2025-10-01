@@ -124,3 +124,21 @@ vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
 
 -- Like windows 10 ctrl + a 
 vim.keymap.set("n", "<leader>a", "ggVG", { desc = "Select All" })
+
+
+-- Only run Prettier on HTML, CSS, JS, JSON, Markdown
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>p",
+  [[<cmd>lua
+      local ft = vim.bo.filetype
+      if ft == "html" or ft == "css" or ft == "javascript" or ft == "typescript"
+        or ft == "json" or ft == "markdown" then
+        vim.cmd('%!prettier --stdin-filepath %')
+      else
+        print("Prettier: Unsupported filetype: " .. ft)
+      end
+  <CR>]],
+  { noremap = true, silent = true }
+)
+

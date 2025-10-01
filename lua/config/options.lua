@@ -42,6 +42,9 @@ vim.opt.smartcase = true -- match case if explicitly stated
 vim.o.timeoutlen = 250
 vim.o.ttimeoutlen = 10
 
+-- vim.o.foldmethod = "expr"
+-- vim.o.foldexpr  = "nvim_treesitter#foldexpr()"
+
 -- 🔵 Set current line number to sky blue
 vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#87ceeb", bold = true })
 
@@ -54,4 +57,18 @@ vim.cmd [[
   highlight LineNrBelow guifg=#ffffff
   highlight CursorLineNr guifg=#00BFFF gui=bold
 ]]
+
+-- use win32yank for clipboard
+vim.g.clipboard = {
+  name = "win32yank-wsl",
+  copy = {
+    ["+"] = "win32yank.exe -i --crlf",
+    ["*"] = "win32yank.exe -i --crlf",
+  },
+  paste = {
+    ["+"] = "win32yank.exe -o --lf",
+    ["*"] = "win32yank.exe -o --lf",
+  },
+  cache_enabled = 0,
+}
 

@@ -1,31 +1,11 @@
 return {
-    -- Mason Installer
-    {
-        "williamboman/mason.nvim",
-        config = function()
-            require("mason").setup()
-        end,
-    },
-
-    -- Mason LSP Installer
-    {
-        "williamboman/mason-lspconfig.nvim",
-        config = function()
-            require("mason-lspconfig").setup({
-                ensure_installed = {
-                    "lua_ls",
-                    "ts_ls", -- ✅ correct name for TypeScript
-                    "html",
-                    "cssls",
-                    "emmet_ls",
-                    "eslint",
-                    "clangd",
-                    "jdtls",
-                    "tailwindcss", -- ✅ NEW: Tailwind CSS LSP for class name suggestions
-                },
-            })
-        end,
-    },
+  -- Mason Installer
+  {
+    "williamboman/mason.nvim",
+    config = function()
+      require("mason").setup()
+    end,
+  },
 
   -- Mason LSP Installer
   {

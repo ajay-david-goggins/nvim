@@ -72,3 +72,7 @@ vim.g.clipboard = {
   cache_enabled = 0,
 }
 
+-- Folded text style (yellow-green text, transparent background)
+-- vim.api.nvim_set_hl(0, "Folded", { fg = "#ccff66", bg = "NONE", bold = true })
+
+

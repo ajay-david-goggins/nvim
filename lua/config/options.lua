@@ -33,6 +33,7 @@ vim.opt.undofile = true -- enable persistent undo
 vim.opt.updatetime = 100 -- set faster completion
 vim.opt.writebackup = false -- prevent editing of files being edited elsewhere
 vim.opt.cursorline = true -- highlight current line
+vim.opt.cursorcolumn = true -- highlight current column
 
 -- Searching Behaviors
 vim.opt.hlsearch = true -- highlight all matches in search

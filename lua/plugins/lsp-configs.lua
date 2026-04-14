@@ -35,7 +35,7 @@ return {
             ensure_installed = {
                 "lua_ls", "ts_ls", "html", "cssls",
                 "emmet_ls", "eslint", "clangd",
-                "jdtls", "tailwindcss", "angularls",
+                "tailwindcss", "angularls",
             },
             automatic_enable = true,
         },
@@ -90,28 +90,28 @@ return {
                 Text          = "󰉿 ",
                 Method        = "󰆧 ",
                 Function      = "󰊕 ",
-                Constructor   = " ",
+                Constructor   = "C ",
                 Field         = "󰜢 ",
                 Variable      = "󰀫 ",
                 Class         = "󰠱 ",
-                Interface     = " ",
-                Module        = " ",
+                Interface     = "I ",
+                Module        = "M ",
                 Property      = "󰜢 ",
                 Unit          = "󰑭 ",
                 Value         = "󰎠 ",
-                Enum          = " ",
+                Enum          = "E ",
                 Keyword       = "󰌋 ",
-                Snippet       = " ",
+                Snippet       = "S ",
                 Color         = "󰏘 ",
                 File          = "󰈙 ",
                 Reference     = "󰈇 ",
                 Folder        = "󰉋 ",
-                EnumMember    = " ",
+                EnumMember    = "EM ",
                 Constant      = "󰏿 ",
                 Struct        = "󰙅 ",
-                Event         = " ",
+                Event         = "EV ",
                 Operator      = "󰆕 ",
-                TypeParameter = " ",
+                TypeParameter = "TP ",
             }
 
             cmp.setup({
@@ -138,13 +138,13 @@ return {
                     end,
                 },
                 mapping = cmp.mapping.preset.insert({
-                    ["<C-k>"]     = cmp.mapping.select_prev_item(),
-                    ["<C-j>"]     = cmp.mapping.select_next_item(),
+                    ["<C-p>"]     = cmp.mapping.select_prev_item(),
+                    ["<C-n>"]     = cmp.mapping.select_next_item(),
                     ["<C-b>"]     = cmp.mapping.scroll_docs(-4),
                     ["<C-f>"]     = cmp.mapping.scroll_docs(4),
                     ["<C-Space>"] = cmp.mapping.complete(),
                     ["<C-e>"]     = cmp.mapping.abort(),
-                    ["<CR>"]      = cmp.mapping.confirm({ select = false }),
+                    ["<Cr>"]      = cmp.mapping.confirm({ select = false }),
                     ["<Tab>"] = cmp.mapping(function(fallback)
                         if cmp.visible() then
                             cmp.select_next_item()
@@ -202,7 +202,7 @@ return {
                             "html", "css", "scss",
                             "javascript", "javascriptreact",
                             "typescript", "typescriptreact",
-                            "json", "jsonc", "markdown",
+                            "json", "jsonc", "markdown","java",
                         },
                         prefer_local = "node_modules/.bin",
                     }),
@@ -308,7 +308,7 @@ return {
                             runtime     = { version = "LuaJIT" },
                             diagnostics = { globals = { "vim" } },
                             workspace   = {
-                                library         = vim.api.nvim_get_runtime_file("", true),
+                                library = { vim.env.VIMRUNTIME },
                                 checkThirdParty = false,
                             },
                             telemetry = { enable = false },
@@ -348,7 +348,6 @@ return {
                 cssls       = { capabilities = capabilities },
                 angularls   = { capabilities = capabilities },
                 tailwindcss = { capabilities = capabilities },
-                jdtls       = { capabilities = capabilities },
 
                 clangd = {
                     capabilities = capabilities,
@@ -377,16 +376,29 @@ return {
             -- ------------------------------------------------------------------
             -- Rounded borders for hover + signature help (0.13 way, no vim.lsp.with)
             -- ------------------------------------------------------------------
+            --vim.lsp.config("*", {
+            --    handlers = {
+            --        ["textDocument/hover"] = function(err, result, ctx, config)
+            --            config = vim.tbl_extend("force", config or {}, { border = "rounded" })
+            --            vim.lsp.handlers.hover(err, result, ctx, config)
+            --        end,
+            --        ["textDocument/signatureHelp"] = function(err, result, ctx, config)
+            --            config = vim.tbl_extend("force", config or {}, { border = "rounded" })
+            --            vim.lsp.handlers.signature_help(err, result, ctx, config)
+            --        end,
+            --    },
+            --})
+
+            -- ------------------------------------------------------------------
+            -- Modern 0.13 way for Global UI settings
+            -- ------------------------------------------------------------------
             vim.lsp.config("*", {
-                handlers = {
-                    ["textDocument/hover"] = function(err, result, ctx, config)
-                        config = vim.tbl_extend("force", config or {}, { border = "rounded" })
-                        vim.lsp.handlers.hover(err, result, ctx, config)
-                    end,
-                    ["textDocument/signatureHelp"] = function(err, result, ctx, config)
-                        config = vim.tbl_extend("force", config or {}, { border = "rounded" })
-                        vim.lsp.handlers.signature_help(err, result, ctx, config)
-                    end,
+                -- Instead of overriding the handler function, 
+                -- we pass options directly to the default handlers.
+                options = {
+                    float = {
+                        border = "rounded",
+                    },
                 },
             })
 
@@ -433,17 +445,17 @@ return {
                     end
 
                     -- Navigation
-                    map("n",        "<leader>ch", vim.lsp.buf.hover,           "󰋖  Hover Docs")
-                    map("n",        "<leader>cd", vim.lsp.buf.definition,      "󰈮  Go to Definition")
-                    map("n",        "<leader>cD", vim.lsp.buf.declaration,     "󰈮  Go to Declaration")
-                    map("n",        "<leader>ci", vim.lsp.buf.implementation,  "󰡱  Go to Implementation")
-                    map("n",        "<leader>ct", vim.lsp.buf.type_definition, "󰆧  Go to Type Def")
+                    map("n",        "<leader>ch", vim.lsp.buf.hover,           "󰋖  [C]ode [H]over Docs")
+                    map("n",        "<leader>cd", vim.lsp.buf.definition,      "󰈮  Go to [C]ode [D]efinition")
+                    map("n",        "<leader>cD", vim.lsp.buf.declaration,     "󰈮  Go to [C]ode [[D]]eclaration")
+                    map("n",        "<leader>ci", vim.lsp.buf.implementation,  "󰡱  Go to [C]ode [I]mplementation")
+                    map("n",        "<leader>ct", vim.lsp.buf.type_definition, "󰆧  Go to [C]ode [T]ype Def")
                     map("n",        "<leader>cr", function()
                         require("telescope.builtin").lsp_references()
-                    end, "󰈇  References")
+                    end, "󰈇  go to [C]ode [R]eferences")
                     map("n",        "<leader>cI", function()
                         require("telescope.builtin").lsp_implementations()
-                    end, "󰡱  Implementations")
+                    end, "󰡱  go to [C]ode [I]mplementations")
 
                     -- Refactor
                     map("n",        "<leader>cR", vim.lsp.buf.rename,          "󰏫  Rename Symbol")
@@ -456,9 +468,9 @@ return {
                     map("n", "<leader>dq",  vim.diagnostic.setloclist,          "󰅙  Diagnostic Quickfix")
 
                     -- Format
-                    map("n", "<leader>cf", function()
-                        vim.lsp.buf.format({ async = false, bufnr = buf })
-                    end, "󰉿  Format Buffer")
+                    --map("n", "<leader>cf", function()
+                    --    vim.lsp.buf.format({ async = false, bufnr = buf })
+                    --end, "󰉿  Format Buffer")
 
                     -- Toggle inlay hints
                     map("n", "<leader>cH", function()
@@ -466,7 +478,7 @@ return {
                             not vim.lsp.inlay_hint.is_enabled({ bufnr = buf }),
                             { bufnr = buf }
                         )
-                    end, "󰊈  Toggle Inlay Hints")
+                    end, "󰊈  Toggle Inlay [C]ode [[H]]ints")
 
                     -- ESLint auto-fix on save
                     if client.name == "eslint" then

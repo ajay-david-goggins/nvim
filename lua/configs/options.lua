@@ -20,7 +20,7 @@ vim.opt.breakindent = true
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.opt.mouse="a"
-vim.opt.conceallevel = 0
+vim.opt.conceallevel = 3
 vim.opt.clipboard = "unnamedplus"
 vim.opt.fileencoding = "utf-8"
 vim.opt.splitbelow = true
@@ -45,3 +45,6 @@ vim.cmd [[
     highlight LineNrBelow guifg=#ffffff
     highlight CursorLineNr guifg=#00BFFF gui=bold
 ]]
+
+-- This makes brackets inside Tailwind classes look like normal text
+vim.api.nvim_set_hl(0, "@punctuation.bracket.javascript", { link = "String" })

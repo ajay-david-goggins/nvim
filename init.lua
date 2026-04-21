@@ -1,6 +1,3 @@
-print("hello From init file")
-
--- store the lazy repe in lazypath standard path 
 local lazypath = vim.fn.stdpath("data").. "/lazy/lazy.nvim"
 
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
@@ -31,5 +28,3 @@ require ("configs.options")
 require ("configs.keymaps")
 
 require ("lazy").setup ("plugins", opts)
-
-print("bye from inti file")

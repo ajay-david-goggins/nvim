@@ -8,7 +8,7 @@ return {
             -- 1. THIS SECTIONS FIXES THE SYNCING ISSUE
             update_focused_file = {
                 enable = true,
-                update_root = false, -- Set to true if you want the root to change to the file's directory
+                update_root = true, -- Set to true if you want the root to change to the file's directory
                 ignore_list = {},
             },
             view = {

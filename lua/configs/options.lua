@@ -48,3 +48,17 @@ vim.cmd [[
 
 -- This makes brackets inside Tailwind classes look like normal text
 vim.api.nvim_set_hl(0, "@punctuation.bracket.javascript", { link = "String" })
+
+-- TESTING DIFFERENT GREENS --
+
+-- Option 1: Classic Grass Green (Bright & Readable)
+vim.api.nvim_set_hl(0, "Comment", { fg = "#7cfc00", italic = true })
+
+-- Option 2: Yellow-Green (Neon style, very high contrast)
+-- vim.api.nvim_set_hl(0, "Comment", { fg = "#adff2f", italic = true })
+
+-- Option 3: Forest Green (Darker, easier on the eyes for long sessions)
+-- vim.api.nvim_set_hl(0, "Comment", { fg = "#228b22" })
+
+-- Option 4: Seafoam Green (Clean, modern look)
+-- vim.api.nvim_set_hl(0, "Comment", { fg = "#3cb371", bold = true })

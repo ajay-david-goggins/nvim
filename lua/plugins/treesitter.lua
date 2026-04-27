@@ -1,0 +1,22 @@
+---- ~/.config/nvim/lua/plugins/treesitter.lua
+--return {
+--    {
+--        "nvim-treesitter/nvim-treesitter",
+--        build = ":TSUpdate",
+--        event = { "BufReadPost", "BufNewFile" },
+--        main = "nvim-treesitter.configs",   -- new API: no manual require needed
+--        opts = {
+--            ensure_installed = {
+--                "c", "cpp",
+--                "javascript", "typescript", "tsx",
+--                "lua",
+--                "json",
+--                "html", "css",
+--                "bash",
+--            },
+--            highlight = { enable = true },
+--            indent    = { enable = true },
+--        },
+--    },
+--}
+return {}

@@ -1,5 +1,6 @@
 return {
   "ThePrimeagen/harpoon",
+  branch="harpoon2",
   event = "VeryLazy",
   dependencies = {
     "nvim-lua/plenary.nvim"
@@ -13,7 +14,7 @@ return {
       mark.add_file()
     end, { desc = "Harpoon Mark File" })
 
-    -- 📁 Toggle Harpoon menu with <Tab>
+    -- 📁 Toggle Harpoon menu with <leader>th
     vim.keymap.set("n", "<leader>th", function()
       ui.toggle_quick_menu()
     end, { desc = "Harpoon Toggle Menu" })

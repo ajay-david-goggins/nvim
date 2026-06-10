@@ -14,13 +14,12 @@ return {
       require("mason-lspconfig").setup({
         ensure_installed = {
           "lua_ls",
-          "ts_ls", -- ✅ Correct name
+          "ts_ls", 
           "html",
           "cssls",
           "emmet_ls",
           "eslint",
-          "clangd",
-          "jdtls", -- ✅ For Java, but handled separately
+          "jdtls", 
           "tailwindcss",
         },
       })
@@ -56,20 +55,29 @@ return {
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
       local util = require("lspconfig.util")
 
+      -- ✅ Manually Installed Clangd (System Path)
+      lspconfig.clangd.setup({
+        capabilities = capabilities,
+        cmd = { "/usr/bin/clangd" },
+      })
+
+      -- ✅ Manually Installed VSCode HTML Server (.npm-global Path)
+      lspconfig.html.setup({
+        capabilities = capabilities,
+        cmd = { "/home/kali/.npm-global/bin/vscode-html-language-server", "--stdio" },
+      })
+
+      -- ✅ Manually Installed VSCode CSS Server (.npm-global Path)
+      lspconfig.cssls.setup({
+        capabilities = capabilities,
+        cmd = { "/home/kali/.npm-global/bin/vscode-css-language-server", "--stdio" },
+      })
+
       -- ✅ LUA
       lspconfig.lua_ls.setup({ capabilities = capabilities })
 
       -- ✅ TypeScript
       lspconfig.ts_ls.setup({ capabilities = capabilities })
-
-      -- ✅ HTML
-      lspconfig.html.setup({ capabilities = capabilities })
-
-      -- ✅ CSS
-      lspconfig.cssls.setup({ capabilities = capabilities })
-
-      -- ✅ C/C++
-      lspconfig.clangd.setup({ capabilities = capabilities })
 
       -- ✅ Tailwind CSS
       lspconfig.tailwindcss.setup({
@@ -161,4 +169,3 @@ return {
     end,
   },
 }
-

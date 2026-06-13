@@ -1,34 +1,32 @@
 return {
   "ThePrimeagen/harpoon",
-  branch="harpoon2",
-  event = "VeryLazy",
+  branch = "harpoon2",
+
   dependencies = {
-    "nvim-lua/plenary.nvim"
+    "nvim-lua/plenary.nvim",
   },
+
   config = function()
-    local mark = require("harpoon.mark")
-    local ui = require("harpoon.ui")
+    local harpoon = require("harpoon")
 
-    -- 🔖 Mark file with <Shift>m
+    harpoon:setup()
+
     vim.keymap.set("n", "<S-m>", function()
-      mark.add_file()
-    end, { desc = "Harpoon Mark File" })
+      harpoon:list():add()
+    end)
 
-    -- 📁 Toggle Harpoon menu with <leader>th
     vim.keymap.set("n", "<leader>th", function()
-      ui.toggle_quick_menu()
-    end, { desc = "Harpoon Toggle Menu" })
+      harpoon.ui:toggle_quick_menu(harpoon:list())
+    end)
 
-    -- 🔢 Jump to files 1–9 using <Alt+1> to <Alt+9>
     for i = 1, 9 do
       vim.keymap.set("n", "<A-" .. i .. ">", function()
-        ui.nav_file(i)
-      end, { desc = "Harpoon: Go to file " .. i })
+        harpoon:list():select(i)
+      end)
     end
 
-    -- 🔟 Jump to file 10 using <Alt+0>
     vim.keymap.set("n", "<A-0>", function()
-      ui.nav_file(10)
-    end, { desc = "Harpoon: Go to file 10" })
+      harpoon:list():select(10)
+    end)
   end,
 }

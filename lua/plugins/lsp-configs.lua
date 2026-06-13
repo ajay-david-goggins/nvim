@@ -235,6 +235,17 @@ return {
                 "\n", { trimempty = true }
             ))
 
+            local launcher_matches = vim.fn.split(vim.fn.glob(mason_pkg .. "/jdtls/plugins/org.eclipse.equinox.launcher_*.jar"), "\n")
+            local launcher_jar = launcher_matches[1]
+
+            if not launcher_jar then
+                vim.notify("JDTLS Launcher JAR missing! Try running :MasonInstall jdtls", vim.log.levels.ERROR)
+                return
+            end
+
+            -- 🌟 FIX 1: Fetch completion capabilities so nvim-cmp can talk to Java
+            local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
             require("jdtls").start_or_attach({
                 cmd = {
                     "java",
@@ -245,7 +256,7 @@ return {
                     "--add-modules=ALL-SYSTEM",
                     "--add-opens", "java.base/java.util=ALL-UNNAMED",
                     "--add-opens", "java.base/java.lang=ALL-UNNAMED",
-                    "-jar", vim.fn.glob(mason_pkg .. "/jdtls/plugins/org.eclipse.equinox.launcher_*.jar"),
+                    "-jar", launcher_jar,
                     "-configuration", mason_pkg .. "/jdtls/config_linux",
                     "-data", workspace,
                 },
@@ -266,6 +277,8 @@ return {
                     bundles = bundles,
                     extendedClientCapabilities = require("jdtls").extendedClientCapabilities,
                 },
+                -- 🌟 FIX 2: Explicitly inject capabilities into the jdtls config
+                capabilities = capabilities,
                 on_attach = function(_, bufnr)
                     require("jdtls").setup_dap({ hotcodereplace = "auto" })
                     require("jdtls.dap").setup_dap_main_class_configs()

@@ -58,20 +58,6 @@ vim.cmd [[
   highlight CursorLineNr guifg=#00BFFF gui=bold
 ]]
 
--- use win32yank for clipboard
-vim.g.clipboard = {
-  name = "win32yank-wsl",
-  copy = {
-    ["+"] = "win32yank.exe -i --crlf",
-    ["*"] = "win32yank.exe -i --crlf",
-  },
-  paste = {
-    ["+"] = "win32yank.exe -o --lf",
-    ["*"] = "win32yank.exe -o --lf",
-  },
-  cache_enabled = 0,
-}
-
 -- Folded text style (yellow-green text, transparent background)
 -- vim.api.nvim_set_hl(0, "Folded", { fg = "#ccff66", bg = "NONE", bold = true })
 

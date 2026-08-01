@@ -311,6 +311,53 @@ return {
             local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
             -- ------------------------------------------------------------------
+            -- 🌟 NEW: "mark as ok" diagnostic filter for TypeScript `any`
+            -- ------------------------------------------------------------------
+            -- Two DIFFERENT sources can flag `any`, so there are two switches:
+            --
+            -- 1) tsserver ("ts_ls") only ever complains about IMPLICIT any,
+            --    e.g. `function f(x) {}` with noImplicitAny on. Writing
+            --    `x: any` explicitly is never a tsserver error — that one
+            --    comes from eslint's `@typescript-eslint/no-explicit-any`
+            --    rule instead (handled in the `eslint` server table below).
+            --
+            -- 2) Toggle both on/off at runtime with :ToggleAnyDiagnostics
+            --    or the buffer keymap <leader>dx (added in LspAttach below).
+            local hide_any_diagnostics = true -- flip default here if you want
+
+            -- tsserver implicit-any diagnostic codes
+            local ts_any_codes = {
+                [7005] = true, -- Variable implicitly has an 'any' type
+                [7006] = true, -- Parameter implicitly has an 'any' type
+                [7008] = true, -- Member implicitly has an 'any' type
+                [7031] = true, -- Binding element implicitly has an 'any' type
+                [7034] = true, -- Variable implicitly has type 'any' in some locations
+            }
+
+            local function filter_any_diagnostics(diagnostics)
+                if not hide_any_diagnostics then return diagnostics end
+                return vim.tbl_filter(function(d)
+                    local code_ok = not (d.code and ts_any_codes[d.code])
+                    -- eslint reports the rule id as a *string* in d.code
+                    local eslint_ok = d.code ~= "@typescript-eslint/no-explicit-any"
+                    return code_ok and eslint_ok
+                end, diagnostics)
+            end
+
+            vim.api.nvim_create_user_command("ToggleAnyDiagnostics", function()
+                hide_any_diagnostics = not hide_any_diagnostics
+                vim.notify(
+                    "any-type diagnostics: " .. (hide_any_diagnostics and "HIDDEN" or "SHOWN"),
+                    vim.log.levels.INFO
+                )
+                for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                    if vim.api.nvim_buf_is_loaded(buf) then
+                        vim.lsp.util._refresh(nil, { bufnr = buf }) -- redraw current diagnostics
+                    end
+                end
+            end, {})
+
+            -- ------------------------------------------------------------------
             -- Per-server settings via 0.11+ vim.lsp.config API
             -- ------------------------------------------------------------------
             local servers = {
@@ -355,6 +402,15 @@ return {
                             },
                         },
                     },
+                    -- 🌟 NEW: filter tsserver's implicit-any diagnostics
+                    handlers = {
+                        ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+                            if result and result.diagnostics then
+                               result.diagnostics = filter_any_diagnostics(result.diagnostics)
+                            end
+                            vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
+                        end,
+                    },
                 },
 
                 html        = { capabilities = capabilities },
@@ -378,6 +434,15 @@ return {
                     capabilities = capabilities,
                     settings = {
                         codeActionOnSave = { enable = true, mode = "all" },
+                    },
+                    -- 🌟 NEW: filter eslint's @typescript-eslint/no-explicit-any
+                    handlers = {
+                        ["textDocument/publishDiagnostics"] = function(err, result, ctx, config)
+                            if result and result.diagnostics then
+                                result.diagnostics = filter_any_diagnostics(result.diagnostics)
+                            end
+                            vim.lsp.handlers["textDocument/publishDiagnostics"](err, result, ctx, config)
+                        end,
                     },
                 },
             }
@@ -478,7 +543,10 @@ return {
                     map("n", "<leader>do",  vim.diagnostic.open_float,          "󰅚  [D]iagnostic Float")
                     map("n", "<leader>dp",         vim.diagnostic.goto_prev,           "󰮳  Prev Diagnostic")
                     map("n", "<leader>dn",         vim.diagnostic.goto_next,           "󰮴  Next Diagnostic")
-                    map("n", "<leader>dq",  vim.diagnostic.setloclist,          "󰅙  Diagnostic Quickfix")
+                    map("n", "<leader>dqf",  vim.diagnostic.setloclist,          "󰅙  Diagnostic Quickfix")
+
+                    -- 🌟 NEW: quick "mark as ok" toggle for any-type diagnostics
+                    map("n", "<leader>dx", "<CMD>ToggleAnyDiagnostics<CR>", "󰸞  [D]iagnostic any-type toggle")
 
                     -- Format
                     --map("n", "<leader>cf", function()

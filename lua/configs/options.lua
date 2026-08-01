@@ -11,9 +11,9 @@ vim.opt.backup = false
 vim.opt.writebackup = false
 
 vim.opt.expandtab = true
-vim.opt.shiftwidth = 4 -- convert the >> or << with number of space
-vim.opt.tabstop = 4 -- number of space character inserted for /t 
-vim.opt.softtabstop = 4 -- number of space character insteader for <Tab> key
+vim.opt.shiftwidth = 2 -- convert the >> or << with number of space
+vim.opt.tabstop = 2 -- number of space character inserted for /t 
+vim.opt.softtabstop = 2 -- number of space character insteader for <Tab> key
 vim.opt.smartindent = true -- enable smart indentation
 vim.opt.breakindent = true
 

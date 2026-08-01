@@ -1,3 +1,26 @@
+-- =============================================================================
+-- git.lua  ·  gitsigns.nvim + vim-fugitive + GitLens-style extras
+-- =============================================================================
+
+-- Shared helper: resolve the commit hash that last touched the CURRENT line
+-- of the CURRENT file, via `git blame --porcelain` (works even without
+-- gitsigns' internal API, so it's stable across gitsigns versions).
+local function get_commit_hash_at_line()
+    local file = vim.fn.expand("%:p")
+    local line = vim.fn.line(".")
+    local result = vim.fn.systemlist(
+        string.format("git blame -L %d,%d --porcelain -- %s", line, line, vim.fn.shellescape(file))
+    )
+    if vim.v.shell_error ~= 0 or #result == 0 then
+        return nil
+    end
+    local hash = result[1]:match("^(%x+)")
+    if not hash or hash:match("^0+$") then
+        return nil -- uncommitted / working-tree line
+    end
+    return hash
+end
+
 return {
     -- =========================================================================
     -- PLUGIN 1: gitsigns.nvim
@@ -50,7 +73,7 @@ return {
                     map("n", "<leader>hp",  gs.preview_hunk,                         "[H]unk [P]review")
 
                     -- Stage / Reset / Undo
-                    map("n", "<leader>hs",  gs.stage_hunk,                           "[H]unk [S]tage")
+                    map("n", "<leader>hs",  gs.stage_hunk,                            "[H]unk [S]tage")
                     map("v", "<leader>hs",  function() gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") }) end, "[H]unk [S]tage (visual)")
                     map("n", "<leader>hu",  gs.undo_stage_hunk,                      "[H]unk [U]ndo stage")
                     map("n", "<leader>hr",  gs.reset_hunk,                           "[H]unk [R]eset")
@@ -64,6 +87,81 @@ return {
                     -- Diff
                     map("n", "<leader>gd",  gs.diffthis,                             "[G]it [D]iff this")
                     map("n", "<leader>gdl", function() gs.diffthis("~") end,         "[G]it [D]iff [L]ast commit")
+
+                    -- =================================================================
+                    -- 🌟 GitLens: Yank commit hash of current line
+                    -- =================================================================
+                    map("n", "<leader>gyc", function()
+                        local hash = get_commit_hash_at_line()
+                        if not hash then
+                            vim.notify("No commit for this line (uncommitted)", vim.log.levels.WARN)
+                            return
+                        end
+                        vim.fn.setreg("+", hash)
+                        vim.notify("󰆏  Copied commit " .. hash:sub(1, 8) .. " to clipboard", vim.log.levels.INFO)
+                    end, "[G]it [Y]ank [C]ommit hash")
+
+                    -- =================================================================
+                    -- 🌟 GitLens: Commit & File Inspector for current line
+                    -- Shows full commit message/metadata + every file touched in
+                    -- that commit. Press <CR> on a file line to view its diff.
+                    -- Press q to close.
+                    -- =================================================================
+                    map("n", "<leader>gci", function()
+                        local hash = get_commit_hash_at_line()
+                        if not hash then
+                            vim.notify("No commit for this line (uncommitted)", vim.log.levels.WARN)
+                            return
+                        end
+
+                        local meta = vim.fn.systemlist(string.format(
+                            "git show -s --format='commit %%H%%nAuthor: %%an <%%ae>%%nDate:   %%ad%%n%%n    %%s%%n%%n%%b' %s",
+                            hash
+                        ))
+                        local stat = vim.fn.systemlist(
+                            string.format("git show --stat --format='' %s", hash)
+                        )
+
+                        local lines = {}
+                        vim.list_extend(lines, meta)
+                        table.insert(lines, "")
+                        table.insert(lines, "── Files changed in this commit (<CR> to diff, q to close) ──")
+                        vim.list_extend(lines, stat)
+
+                        local buf = vim.api.nvim_create_buf(false, true)
+                        vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+                        vim.bo[buf].filetype   = "git"
+                        vim.bo[buf].bufhidden  = "wipe"
+                        vim.bo[buf].modifiable = false
+
+                        local width  = math.floor(vim.o.columns * 0.8)
+                        local height = math.floor(vim.o.lines * 0.8)
+                        local win = vim.api.nvim_open_win(buf, true, {
+                            relative  = "editor",
+                            width     = width,
+                            height    = height,
+                            row       = math.floor((vim.o.lines - height) / 2),
+                            col       = math.floor((vim.o.columns - width) / 2),
+                            border    = "rounded",
+                            title     = " Commit Inspector · " .. hash:sub(1, 8) .. " ",
+                            title_pos = "center",
+                        })
+
+                        vim.keymap.set("n", "<CR>", function()
+                            local cur = vim.api.nvim_get_current_line()
+                            local file = cur:match("^%s*(.-)%s+|")
+                            if not file or file == "" then return end
+                            vim.api.nvim_win_close(win, true)
+                            vim.cmd("tabnew")
+                            vim.cmd("Git show " .. hash .. " -- " .. vim.fn.fnameescape(file))
+                        end, { buffer = buf, silent = true, desc = "Open diff for file under cursor" })
+
+                        vim.keymap.set("n", "q", function()
+                            if vim.api.nvim_win_is_valid(win) then
+                                vim.api.nvim_win_close(win, true)
+                            end
+                        end, { buffer = buf, silent = true })
+                    end, "[G]it [C]ommit [I]nspector (GitLens)")
                 end,
             })
         end,
@@ -82,7 +180,7 @@ return {
             local o   = function(desc) return { desc = desc, silent = true } end
 
             -- Status & Diff
-            map("n", "<leader>gS",   ":Git<CR>",               o("[G]it [S]tatus"))
+            map("n", "<leader>gS",   ":Git<CR>",                o("[G]it [S]tatus"))
             map("n", "<leader>gds",  ":Gvdiffsplit<CR>",        o("[G]it [D]iff [S]plit"))
 
             -- Add
@@ -143,6 +241,18 @@ return {
                 end
             end, o("[G]it [R]e[S]et to commit"))
 
+            -- =================================================================
+            -- 🌟 GitLens: Global commit hash inspection (prompt for any SHA)
+            -- =================================================================
+            map("n", "<leader>gch", function()
+                local hash = vim.fn.input("Inspect commit hash: ")
+                if hash ~= "" then
+                    vim.cmd("Git show " .. hash)
+                else
+                    vim.notify("Commit inspection cancelled", vim.log.levels.WARN)
+                end
+            end, o("[G]it [C]ommit [H]ash inspect (GitLens)"))
+
             -- No wrap in git/fugitive buffers (was hiding text)
             vim.api.nvim_create_autocmd("FileType", {
                 pattern  = { "fugitive", "git" },
@@ -172,6 +282,9 @@ return {
 -- <leader>gib     [G]it [I]nline [B]lame    toggle on/off
 -- <leader>gd      [G]it [D]iff this         vs index
 -- <leader>gdl     [G]it [D]iff [L]ast       vs last commit (~)
+-- <leader>gyc     [G]it [Y]ank [C]ommit     hash of current line → clipboard (GitLens)
+-- <leader>gci     [G]it [C]ommit [I]nspector current line: message + metadata +
+--                                           all files in that commit, <CR>=diff file, q=close (GitLens)
 --
 -- vim-fugitive
 -- <leader>gS      [G]it [S]tatus            (- to stage, cc to commit, q to quit)
@@ -185,7 +298,7 @@ return {
 -- <leader>glg     [G]it [L]o[G]             oneline
 -- <leader>ghl     [G]it [H]istory [L]og     project graph (--all)
 -- <leader>gfl     [G]it [F]ile [L]og        GitLens: all commits for this file
---                                            location list, Enter = view diff
+--                                           location list, Enter = view diff
 -- <leader>gbl     [G]it [B]lame [L]ine      full file, Enter opens commit
 -- <leader>gcb     [G]it [C]reate [B]ranch
 -- <leader>gco     [G]it [C]heck[O]ut
@@ -193,4 +306,5 @@ return {
 -- <leader>gsf     [G]it [S]ync [F]ork
 -- <leader>grc     [G]it [R]evert [C]ommit   (prompt)
 -- <leader>grs     [G]it [R]e[S]et           (prompt hash + soft/mixed/hard)
+-- <leader>gch     [G]it [C]ommit [H]ash inspect (prompt any SHA, GitLens)
 -- =============================================================================

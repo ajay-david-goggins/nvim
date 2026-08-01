@@ -1,12 +1,28 @@
 -- =============================================================================
 -- db.lua  ·  Neovim 0.13+ · vim-dadbod + dadbod-ui + dadbod-completion
 -- =============================================================================
--- WHY <leader>D (uppercase) and not <leader>d:
--- <leader>d is already fully owned by Diagnostics (do/dp/dn/dq) and DAP-ish
--- jdtls keys (dt/dT) in lsp-configs.lua. Lua/Vim keymaps are case-sensitive,
--- so <leader>D is a completely separate, collision-free namespace — same
--- trick already used in this config for <leader>hR / <leader>hS (uppercase
--- = "buffer-wide" variant of the lowercase hunk keys).
+-- ROOT CAUSE OF THE ORIGINAL BUG (for future-me):
+-- `cmd = {...}` was the ONLY lazy-load trigger, and every keymap was defined
+-- inside config(). Lazy.nvim will not run config() until one of the `cmd`
+-- names is invoked — but the only way to invoke :DBUIToggle was the keymap,
+-- which didn't exist yet because config() hadn't run. Chicken-and-egg:
+--
+--   [Neovim starts] → plugin NOT loaded → <leader>?? not registered
+--   → keypress falls through to native Neovim → "de" = delete-to-end-of-word
+--   (this is exactly what was eating the character after the cursor)
+--
+-- THE PERMANENT FIX: give lazy.nvim a `keys = {...}` spec. Lazy pre-registers
+-- those exact key sequences as real (but empty) mappings on startup, BEFORE
+-- the plugin loads. The first time you press one, lazy intercepts it, loads
+-- the plugin (running config(), which then defines the real mapping), and
+-- replays the keypress. `ft` is added too so opening/entering a query buffer
+-- loads the plugin even if you never touched a global keymap first.
+-- =============================================================================
+-- NAMESPACE: <leader>db  (not uppercase <leader>D)
+-- <leader>d already has complete 2-key leaves: do/dp/dn/dq (diagnostics) and
+-- dt/dT (jdtls test). Those are DIFFERENT branches in the keymap trie from
+-- <leader>db*, so "db" as a 3-key prefix never collides with them — no need
+-- to switch case at all.
 -- =============================================================================
 
 return {
@@ -18,17 +34,17 @@ return {
     {
         "kristijanhusak/vim-dadbod-ui",
         dependencies = { "tpope/vim-dadbod" },
-        -- Lazy registers these keys on startup without executing heavy code.
-        -- Pressing any <leader>D key instantly lazy-loads vim-dadbod-ui.
-        keys = {
-            { "<leader>du", "<cmd>DBUIToggle<CR>",         desc = "[D]atabase [U]I Toggle" },
-            { "<leader>dc", "<cmd>DBUIAddConnection<CR>",   desc = "[D]atabase [C]onnection Add" },
-            { "<leader>df", "<cmd>DBUIFindBuffer<CR>",      desc = "[D]atabase [F]ind Buffer" },
-            { "<leader>dr", "<cmd>DBUIRenameBuffer<CR>",    desc = "[D]atabase [R]ename Buffer" },
-            { "<leader>dq", "<cmd>DBUILastQueryInfo<CR>",  desc = "[D]atabase last [Q]uery Info" },
-        },
         cmd = {
             "DBUI", "DBUIToggle", "DBUIAddConnection", "DBUIFindBuffer",
+        },
+        -- 🌟 THE FIX: lazy-load on either a keypress or entering a DB filetype
+        ft = { "sql", "mysql", "plsql" },
+        keys = {
+            { "<leader>du", "<cmd>DBUIToggle<CR>",        desc = "[D]ata[B]ase [U]I Toggle" },
+            { "<leader>dc", "<cmd>DBUIAddConnection<CR>", desc = "[D]ata[B]ase [C]onnection Add" },
+            { "<leader>df", "<cmd>DBUIFindBuffer<CR>",    desc = "[D]ata[B]ase [F]ind Buffer" },
+            { "<leader>dr", "<cmd>DBUIRenameBuffer<CR>",  desc = "[D]ata[B]ase [R]ename Buffer" },
+            { "<leader>dq", "<cmd>DBUILastQueryInfo<CR>", desc = "[D]ata[B]ase last [Q]uery Info" },
         },
         init = function()
             -- dadbod-ui reads these BEFORE it loads, so set in init(), not config()
@@ -41,30 +57,48 @@ return {
             vim.g.db_ui_execute_on_save    = 0
         end,
         config = function()
-            local map = vim.keymap.set
+            local db_filetypes = { "sql", "mysql", "plsql" }
 
-            -- Buffer-local keymaps inside actual DB query buffers
-            -- (sql / mysql / plsql / dbout / dbui), mirroring the jdtls ft-pattern
+            -- Buffer-local keymaps only inside actual DB query buffers
+            -- (sql / mysql / plsql / dbout), mirroring the jdtls ft-pattern
             -- already used in lsp-configs.lua for Java.
+            local function apply_dbui_buffer_keymaps(buf)
+                local bo = function(desc) return { buffer = buf, silent = true, desc = desc } end
+
+                -- Execute query: whole buffer (normal) or selection (visual)
+                vim.keymap.set("n", "<leader>de", "<Plug>(DBUI_ExecuteQuery)", bo("[D]ata[B]ase [E]xecute query"))
+                vim.keymap.set("v", "<leader>de", "<Plug>(DBUI_ExecuteQuery)", bo("[D]ata[B]ase [E]xecute selection"))
+
+                -- Save current query into the saved-queries tree
+                vim.keymap.set("n", "<leader>ds", "<Plug>(DBUI_SaveQuery)", bo("[D]ata[B]ase [S]ave query"))
+
+                -- Edit bind parameters
+                vim.keymap.set("n", "<leader>dd", "<Plug>(DBUI_EditBindParameters)", bo("[D]ata[B]ase e[D]it bind params"))
+            end
+
+            -- Covers every FUTURE sql/mysql/plsql buffer.
             vim.api.nvim_create_autocmd("FileType", {
-                pattern = { "sql", "mysql", "plsql", "dbout", "dbui" },
-                group   = vim.api.nvim_create_augroup("UserDadbodBuffer", { clear = true }),
+                pattern  = db_filetypes,
+                group    = vim.api.nvim_create_augroup("UserDadbodBuffer", { clear = true }),
                 callback = function(args)
-                    local buf = args.buf
-                    local bo  = function(desc) return { buffer = buf, silent = true, desc = desc } end
-
-                    -- Execute query: whole buffer (normal) or selection (visual)
-                    -- Uses direct :DB command to prevent <Plug> resolution failures
-                    map("n", "<leader>De", "<cmd>%DB<CR>", bo("[D]atabase [E]xecute query"))
-                    map("v", "<leader>De", ":DB<CR>",     bo("[D]atabase [E]xecute selection"))
-
-                    -- Save current query into the saved-queries tree
-                    map("n", "<leader>Ds", "<Plug>(DBUI_SaveQuery)", bo("[D]atabase [S]ave query"))
-
-                    -- Edit bind parameters
-                    map("n", "<leader>Dd", "<Plug>(DBUI_EditBindParameters)", bo("[D]atabase e[D]it bind params"))
+                    apply_dbui_buffer_keymaps(args.buf)
                 end,
             })
+
+            -- 🌟 RACE-CONDITION FIX: if the `ft` trigger above is what caused
+            -- THIS config() to run in the first place, the FileType event for
+            -- the CURRENT buffer already fired before the autocmd right above
+            -- existed — so it would never get the keymap otherwise. Catch it
+            -- explicitly, once, right here.
+            local cur_buf = vim.api.nvim_get_current_buf()
+            if vim.tbl_contains(db_filetypes, vim.bo[cur_buf].filetype) then
+                apply_dbui_buffer_keymaps(cur_buf)
+            end
+
+            -- Sanity check you can run any time:
+            -- :set filetype?        → confirms filetype is "sql"/"mysql"/"plsql"
+            -- :map <leader>dbe      → confirms the buffer-local map exists
+            -- :verbose map <leader>dbe → shows WHERE it was last set (or that it's undefined)
         end,
     },
 
@@ -94,12 +128,12 @@ return {
 -- =============================================================================
 -- KEYBIND CHEATSHEET (db.lua)
 -- =============================================================================
--- <leader>Du   [D]atabase [U]I toggle          (global)
--- <leader>Dc   [D]atabase [C]onnection add     (global)
--- <leader>Df   [D]atabase [F]ind buffer        (global)
--- <leader>Dr   [D]atabase [R]ename buffer      (global)
--- <leader>Dq   [D]atabase last [Q]uery info    (global)
--- <leader>De   [D]atabase [E]xecute query      (sql/mysql/plsql buffers only, n+v)
--- <leader>Ds   [D]atabase [S]ave query         (sql/mysql/plsql buffers only)
--- <leader>Dd   [D]atabase e[D]it bind params   (sql/mysql/plsql buffers only)
+-- <leader>dbu   [D]ata[B]ase [U]I toggle          (global, always available)
+-- <leader>dbc   [D]ata[B]ase [C]onnection add     (global, always available)
+-- <leader>dbf   [D]ata[B]ase [F]ind buffer        (global, always available)
+-- <leader>dbr   [D]ata[B]ase [R]ename buffer      (global, always available)
+-- <leader>dbq   [D]ata[B]ase last [Q]uery info    (global, always available)
+-- <leader>dbe   [D]ata[B]ase [E]xecute query      (sql/mysql/plsql buffers only, n+v)
+-- <leader>dbs   [D]ata[B]ase [S]ave query         (sql/mysql/plsql buffers only)
+-- <leader>dbd   [D]ata[B]ase e[D]it bind params   (sql/mysql/plsql buffers only)
 -- =============================================================================

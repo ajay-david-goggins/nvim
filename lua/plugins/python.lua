@@ -40,10 +40,7 @@ return {
             formatters_by_ft = {
                 python = { "ruff_format", "ruff_organize_imports" },
             },
-            format_on_save = {
-                timeout_ms   = 2000,
-                lsp_fallback = false,
-            },
+            format_on_save = false,
         },
     },
 
@@ -155,6 +152,15 @@ return {
                     name       = "Launch file",
                     program    = "${file}",
                     pythonPath = get_python,
+                },
+                {
+                    type    = "python",
+                    request = "attach",
+                    name    = "Attach to Frappe",
+                    connect = {
+                        port = 5678,
+                        host = "127.0.0.1",
+                    },
                 },
                 {
                     type       = "python",

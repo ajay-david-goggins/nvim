@@ -208,10 +208,64 @@ return {
 
             -- GitLens feature: all commits that touched the current file
             -- Opens location list, navigate ]q/[q, Enter to view diff
-            map("n", "<leader>gfl", function()
-                vim.cmd("0Gclog")
-                vim.cmd("lopen")
-            end, o("[G]it [F]ile [L]og (GitLens)"))
+            -- inside the fugitive config = function() ... end
+
+            -- Remember the file we are viewing history for
+            local current_file_for_log = nil
+
+            map("n", "<leader>glf", function()
+                local file = vim.fn.expand("%:p")
+                if file == "" then
+                    vim.notify("No file in buffer", vim.log.levels.WARN)
+                    return
+                end
+
+                current_file_for_log = file
+
+                local cmd = string.format(
+                    "Git log --pretty=format:'%%h  %%ad  %%an  %%s' --date=format:'%%Y-%%m-%%d %%H:%%M' -- %s",
+                    vim.fn.fnameescape(file)
+                )
+                vim.cmd(cmd)
+            end, o("[G]it [L]og of [F]ile(timeline)"))
+
+            vim.api.nvim_create_autocmd("FileType", {
+                pattern = "git",
+                callback = function()
+                    vim.keymap.set("n", "<CR>", function()
+                        local line = vim.api.nvim_get_current_line()
+                        local hash = line:match("^(%x+)")
+                        if not hash then
+                            vim.notify("No commit hash on this line", vim.log.levels.WARN)
+                            return
+                        end
+
+                        local file = current_file_for_log
+                        if not file or file == "" then
+                            vim.notify("Original file not found (open file first, then <leader>gfl)", vim.log.levels.WARN)
+                            return
+                        end
+
+                        -- Make path relative to git root (required by fugitive)
+                        local git_root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
+                        if not git_root or git_root == "" then
+                            vim.notify("Not inside a git repository", vim.log.levels.ERROR)
+                            return
+                        end
+
+                        local rel_file = file
+                        -- strip git root if the path is absolute
+                        if file:sub(1, #git_root) == git_root then
+                            rel_file = file:sub(#git_root + 2)   -- +2 to skip the /
+                        end
+
+                        -- Side-by-side: left = previous commit, right = this commit
+                        vim.cmd("tabnew")
+                        vim.cmd("Gedit " .. hash .. "^:" .. vim.fn.fnameescape(rel_file))
+                        vim.cmd("Gvdiffsplit " .. hash .. ":" .. vim.fn.fnameescape(rel_file))
+                    end, { buffer = true, silent = true, desc = "Side-by-side: commit vs previous (file only)" })
+                end,
+            })
 
             -- Blame full file (8-char hash per line, Enter opens that commit)
             map("n", "<leader>gbl",  ":Git blame<CR>",          o("[G]it [B]lame [L]ine"))

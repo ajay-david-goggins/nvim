@@ -55,14 +55,14 @@ return {
 
                     -- Execute query: whole buffer (normal) or selection (visual)
                     -- Uses direct :DB command to prevent <Plug> resolution failures
-                    map("n", "<leader>De", "<cmd>%DB<CR>", bo("[D]atabase [E]xecute query"))
-                    map("v", "<leader>De", ":DB<CR>",     bo("[D]atabase [E]xecute selection"))
+                    map("n", "<leader>de", "<cmd>%DB<CR>", bo("[D]atabase [E]xecute query"))
+                    map("v", "<leader>de", ":DB<CR>",     bo("[D]atabase [E]xecute selection"))
 
                     -- Save current query into the saved-queries tree
-                    map("n", "<leader>Ds", "<Plug>(DBUI_SaveQuery)", bo("[D]atabase [S]ave query"))
+                    map("n", "<leader>ds", "<Plug>(DBUI_SaveQuery)", bo("[D]atabase [S]ave query"))
 
                     -- Edit bind parameters
-                    map("n", "<leader>Dd", "<Plug>(DBUI_EditBindParameters)", bo("[D]atabase e[D]it bind params"))
+                    map("n", "<leader>dd", "<Plug>(DBUI_EditBindParameters)", bo("[D]atabase e[D]it bind params"))
                 end,
             })
         end,

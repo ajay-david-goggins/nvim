@@ -27,6 +27,8 @@ return {
         opts = function(_, opts)
             opts.ensure_installed = opts.ensure_installed or {}
             vim.list_extend(opts.ensure_installed, { "debugpy" })
+            opts.handlers = opts.handlers or {}
+            opts.handlers.python = function() end
         end,
     },
 
@@ -128,15 +130,36 @@ return {
         ft = { "python" },
         config = function()
             local dap     = require("dap")
+            -- Enable detailed DAP logging
+            dap.set_log_level("TRACE")
             local mason_pkg = vim.fn.expand("~/.local/share/nvim/mason/packages")
 
             -- ── Adapter ──────────────────────────────────────────────────────
-            dap.adapters.python = {
-                type    = "executable",
-                command = mason_pkg .. "/debugpy/venv/bin/python",
-                args    = { "-m", "debugpy.adapter" },
-            }
+            -- dap.adapters.python = {
+            --     type    = "executable",
+            --     command = mason_pkg .. "/debugpy/venv/bin/python",
+            --     args    = { "-m", "debugpy.adapter" },
+            -- }
 
+            dap.adapters.python = function(cb, config)
+                if config.request == "attach" then
+                    -- Attach: connect directly to the already-listening debugpy socket
+                    local port = (config.connect or config).port
+                    local host = (config.connect or config).host or "127.0.0.1"
+                    cb({
+                        type = "server",
+                        host = host,
+                        port = port,
+                    })
+                else
+                    -- Launch: spawn a fresh debugpy adapter
+                    cb({
+                        type = "executable",
+                        command = mason_pkg .. "/debugpy/venv/bin/python",
+                        args = { "-m", "debugpy.adapter" },
+                    })
+                end
+            end
             -- ── Helper: prefer .venv, fall back to system python ─────────────
             local function get_python()
                 local venv = vim.fn.getcwd() .. "/.venv/bin/python"
@@ -147,29 +170,45 @@ return {
             -- ── Debug configurations ──────────────────────────────────────────
             dap.configurations.python = {
                 {
-                    type       = "python",
-                    request    = "launch",
-                    name       = "Launch file",
-                    program    = "${file}",
+                    type = "python",
+                    request = "attach",
+                    name = "Attach to Frappe",
+                    connect = {
+                        host = "127.0.0.1",
+                        port = 5678,
+                    },
+                    justMyCode = false,
+                    pathMappings = {
+                        {
+                            localRoot = vim.fn.expand("~/calone/BACKEND"),
+                            remoteRoot = vim.fn.expand("~/calone/BACKEND"),
+                        },
+                    },
+                },
+                {
+                    type = "python",
+                    request = "launch",
+                    name = "Launch file",
+                    program = "${file}",
                     pythonPath = get_python,
                 },
                 {
-                    type       = "python",
-                    request    = "launch",
-                    name       = "Launch with args",
-                    program    = "${file}",
-                    args       = function()
+                    type = "python",
+                    request = "launch",
+                    name = "Launch with args",
+                    program = "${file}",
+                    args = function()
                         local args = vim.fn.input("Args: ")
                         return vim.split(args, " ", { trimempty = true })
                     end,
                     pythonPath = get_python,
                 },
                 {
-                    type       = "python",
-                    request    = "launch",
-                    name       = "pytest: current file",
-                    module     = "pytest",
-                    args       = { "${file}", "-v" },
+                    type = "python",
+                    request = "launch",
+                   name = "pytest: current file",
+                    module = "pytest",
+                    args = { "${file}", "-v" },
                     pythonPath = get_python,
                 },
             }

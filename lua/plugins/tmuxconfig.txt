@@ -1,0 +1,148 @@
+
+##### PREFIX ######################################################
+
+unbind C-b
+set -g prefix F8
+bind F8 send-prefix
+
+##### TERMINAL ####################################################
+
+set -g default-terminal "tmux-256color"
+set -as terminal-features ",*:RGB"
+
+##### GENERAL #####################################################
+
+set -g mouse on
+set -g history-limit 100000
+set -sg escape-time 0
+
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+
+set -g allow-rename off
+
+##### SPLITS ######################################################
+
+bind | split-window -h
+bind - split-window -v
+
+##### PANE MOVEMENT ###############################################
+
+bind h select-pane -L
+bind j select-pane -D
+bind k select-pane -U
+bind l select-pane -R
+
+##### WINDOW NAVIGATION ###########################################
+
+bind -n M-Left  previous-window
+bind -n M-Right next-window
+
+##### RESIZE ######################################################
+
+bind -r M-h resize-pane -L 5
+bind -r M-j resize-pane -D 5
+bind -r M-k resize-pane -U 5
+bind -r M-l resize-pane -R 5
+
+##### WINDOW MANAGEMENT ###########################################
+
+bind c new-window
+
+bind , command-prompt -I "#W" "rename-window '%%'"
+
+bind & confirm-before -p "Kill window #W? (y/n)" kill-window
+
+bind x confirm-before -p "Kill pane? (y/n)" kill-pane
+
+##### LAYOUT ######################################################
+
+bind Space next-layout
+
+bind H select-layout main-horizontal
+
+bind M select-layout main-vertical
+
+bind T select-layout tiled
+
+bind E select-layout even-horizontal
+
+bind e select-layout even-vertical
+
+##### ZOOM ########################################################
+
+bind z resize-pane -Z
+
+##### SYNCHRONIZE PANES ###########################################
+
+bind y setw synchronize-panes
+
+##### RELOAD ######################################################
+
+bind r source-file ~/.tmux.conf \; display-message "tmux.conf reloaded"
+
+##### COPY MODE ###################################################
+
+setw -g mode-keys vi
+
+bind v copy-mode
+
+bind-key -T copy-mode-vi v send -X begin-selection
+
+bind-key -T copy-mode-vi V send -X select-line
+
+bind-key -T copy-mode-vi C-v send -X rectangle-toggle
+
+bind-key -T copy-mode-vi y send -X copy-selection-and-cancel
+
+bind p paste-buffer
+
+##### SCROLL ######################################################
+
+bind PageUp copy-mode -u
+
+##### SESSION #####################################################
+
+bind C-s run-shell '~/.tmux/plugins/tmux-resurrect/scripts/save.sh'
+
+bind C-r run-shell '~/.tmux/plugins/tmux-resurrect/scripts/restore.sh'
+
+##### STATUS BAR ##################################################
+
+set -g status-position bottom
+
+set -g status-interval 5
+
+set -g status-left-length 40
+set -g status-right-length 100
+
+set -g status-left "#[bold]#S "
+
+set -g status-right "#H | %Y-%m-%d %H:%M"
+
+##### PLUGINS #####################################################
+
+set -g @plugin 'tmux-plugins/tpm'
+
+set -g @plugin 'tmux-plugins/tmux-resurrect'
+
+set -g @plugin 'tmux-plugins/tmux-continuum'
+
+set -g @plugin 'tmux-plugins/tmux-yank'
+
+set -g @plugin 'christoomey/vim-tmux-navigator'
+
+##### CONTINUUM ###################################################
+
+set -g @continuum-restore 'on'
+
+set -g @continuum-save-interval '15'
+
+##### YANK ########################################################
+
+set -g @yank_action 'copy-pipe'
+
+##### TPM #########################################################
+
+run '~/.tmux/plugins/tpm/tpm'

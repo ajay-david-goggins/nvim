@@ -1,7 +1,9 @@
 return {
   "ThePrimeagen/harpoon",
   branch = "harpoon2",
+
   event = "VeryLazy",
+
   dependencies = {
     "nvim-lua/plenary.nvim",
   },
@@ -9,7 +11,9 @@ return {
   config = function()
     local harpoon = require("harpoon")
 
-    -- REQUIRED
+    -- =========================================================================
+    -- HARPOON SETUP
+    -- =========================================================================
     harpoon:setup({
       settings = {
         save_on_toggle = true,
@@ -17,36 +21,60 @@ return {
       },
     })
 
-    -- 🔖 Mark current file
+    -- =========================================================================
+    -- MARK CURRENT FILE
+    -- =========================================================================
     vim.keymap.set("n", "<S-m>", function()
       harpoon:list():add()
-    end, { desc = "Harpoon Mark File" })
+    end, {
+      desc = "Harpoon Mark File",
+    })
 
-    -- 📁 Toggle Harpoon menu
+    -- =========================================================================
+    -- TOGGLE HARPOON MENU
+    -- =========================================================================
     vim.keymap.set("n", "<leader>th", function()
       harpoon.ui:toggle_quick_menu(harpoon:list())
-    end, { desc = "Harpoon Toggle Menu" })
+    end, {
+      desc = "Harpoon Toggle Menu",
+    })
 
-    -- 🔢 Jump to files 1-9
+    -- =========================================================================
+    -- JUMP TO FILES 1-9
+    -- =========================================================================
     for i = 1, 9 do
       vim.keymap.set("n", "<A-" .. i .. ">", function()
         harpoon:list():select(i)
-      end, { desc = "Harpoon File " .. i })
+      end, {
+        desc = "Harpoon File " .. i,
+      })
     end
 
-    -- 🔟 Jump to file 10
+    -- =========================================================================
+    -- JUMP TO FILE 10
+    -- =========================================================================
     vim.keymap.set("n", "<A-0>", function()
       harpoon:list():select(10)
-    end, { desc = "Harpoon File 10" })
+    end, {
+      desc = "Harpoon File 10",
+    })
 
-    -- ⏭ Next file
+    -- =========================================================================
+    -- NEXT FILE
+    -- =========================================================================
     vim.keymap.set("n", "<leader>hn", function()
       harpoon:list():next()
-    end, { desc = "Harpoon Next" })
+    end, {
+      desc = "Harpoon Next",
+    })
 
-    -- ⏮ Previous file
+    -- =========================================================================
+    -- PREVIOUS FILE
+    -- =========================================================================
     vim.keymap.set("n", "<leader>hp", function()
       harpoon:list():prev()
-    end, { desc = "Harpoon Previous" })
+    end, {
+      desc = "Harpoon Previous",
+    })
   end,
 }

@@ -40,10 +40,7 @@ return {
             formatters_by_ft = {
                 python = { "ruff_format", "ruff_organize_imports" },
             },
-            format_on_save = {
-                timeout_ms   = 2000,
-                lsp_fallback = false,
-            },
+            format_on_save = false,
         },
     },
 

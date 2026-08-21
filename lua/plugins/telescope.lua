@@ -34,12 +34,11 @@ return {
                     -- second line in the results window -- wrapping there
                     -- pushes every other row down and makes the list jump
                     -- around as you move the selection.
-                    wrap_results = false,
-                    path_display = { "truncate" },
+                    wrap_results = true,
                     layout_config = {
                         horizontal = {
                             prompt_position = "top",
-                            preview_width = 0.55,
+                            preview_width = 0.45,
                         },
                     },
                     mappings = {

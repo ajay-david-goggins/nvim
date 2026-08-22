@@ -1,0 +1,13 @@
+# Windows "mark of the web" alternate-data-stream marker files. These get
+# created automatically by Windows Explorer whenever you extract a .zip that
+# was downloaded from the internet -- one per extracted file, named
+# "<filename>:Zone.Identifier". They're inert (Neovim/git never read them,
+# wrong extension for anything to load) but they clutter every directory
+# listing and diff. Safe to delete; this keeps them out of the repo.
+*Zone.Identifier
+
+# Standard Neovim/editor noise
+*.swp
+*.swo
+*~
+.DS_Store

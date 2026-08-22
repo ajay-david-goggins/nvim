@@ -16,7 +16,13 @@ return {
         theme = "dracula", -- matches plugins/colorscheme.lua
         component_separators = { left = "│", right = "│" },
         section_separators = { left = "", right = "" },
-        globalstatus = true, -- one statusline for the whole editor, not per-split
+        -- globalstatus was OFF for a reason: with laststatus=3 (one shared
+        -- statusline for the whole editor), Neovim's built-in incsearch
+        -- match-count indicator ("[1/12]" while typing /pattern) has no
+        -- per-window statusline left to draw into, and it just silently
+        -- disappears. That's what broke it -- not your search settings.
+        -- Keeping this false restores the native match-count display.
+        -- globalstatus = false,
       },
       sections = {
         lualine_a = { "mode" },

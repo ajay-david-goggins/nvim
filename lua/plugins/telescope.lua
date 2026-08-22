@@ -35,6 +35,29 @@ return {
                     -- pushes every other row down and makes the list jump
                     -- around as you move the selection.
                     wrap_results = true,
+                    -- Folders/files that clutter every project search and
+                    -- you never actually want a hit inside. Applies to
+                    -- find_files, live_grep, grep_string -- everything that
+                    -- shares `defaults`. Add more patterns here as needed.
+                    -- file_ignore_patterns = {
+                    --     "%.git/",
+                    --     "node_modules/",
+                    --     "dist/",
+                    --     "build/",
+                    --     "vendor/",
+                    --     "target/",
+                    --     "__pycache__/",
+                    --     "%.venv/",
+                    --     "venv/",
+                    --     "%.next/",
+                    --     "%.cache/",
+                    --     "coverage/",
+                    --     "%.lock$",
+                    --     "package%-lock%.json",
+                    --     "yarn%.lock",
+                    --     "%.min%.js$",
+                    --     "%.min%.css$",
+                    -- },
                     layout_config = {
                         horizontal = {
                             prompt_position = "top",
@@ -108,12 +131,95 @@ return {
             end, { desc = "[F]ind in [C]urrent buffer's dir" })
 
             map('n', '<leader>fb', builtin.buffers,   { desc = '[F]ind [B]uffers' })
-            map('n', '<leader>f.', builtin.oldfiles,  { desc = '[F]ind Recent [.]files' })
             map('n', '<leader>fr', builtin.resume,    { desc = '[F]inder [R]esume' })
             map('n', '<leader>fs', builtin.lsp_document_symbols, { desc = '[F]ind [S]ymbols (buffer)' })
             map('n', '<leader>fd', function()
                 builtin.diagnostics({ bufnr = 0 })
             end, { desc = '[F]ind [D]iagnostics (buffer)' })
+
+            -- -----------------------------------------------------------------
+            -- Recent files (§: oldfiles was showing stale/unrelated entries)
+            --
+            -- builtin.oldfiles just lists vim.v.oldfiles as-is: every file
+            -- Neovim has EVER opened across EVERY project on this machine,
+            -- including ones that have since been deleted or moved. That's
+            -- exactly the "sometimes shows unexpected stuff" symptom -- it's
+            -- not scoped to the current project and never checks the file
+            -- still exists.
+            --
+            -- This custom picker filters vim.v.oldfiles down to files that
+            -- (a) are still on disk right now, and (b) live under the
+            -- current project root -- before Telescope ever sees them.
+            -- -----------------------------------------------------------------
+            map('n', '<leader>f.', function()
+                local root = project_root()
+                local results = {}
+                local seen = {}
+                for _, file in ipairs(vim.v.oldfiles) do
+                    local abs = vim.fn.fnamemodify(file, ':p')
+                    if not seen[abs]
+                        and abs:sub(1, #root) == root
+                        and vim.loop.fs_stat(abs) ~= nil
+                    then
+                        seen[abs] = true
+                        table.insert(results, abs)
+                    end
+                end
+
+                require('telescope.pickers').new({}, {
+                    prompt_title = 'Recent Files (project, existing only)',
+                    finder = require('telescope.finders').new_table({
+                        results = results,
+                        entry_maker = function(entry)
+                            return {
+                                value = entry,
+                                display = vim.fn.fnamemodify(entry, ':.'),
+                                ordinal = entry,
+                                path = entry,
+                            }
+                        end,
+                    }),
+                    sorter = require('telescope.config').values.file_sorter({}),
+                    previewer = require('telescope.config').values.file_previewer({}),
+                }):find()
+            end, { desc = '[F]ind Recent [.]files (project, existing only)' })
+
+            -- The old, unfiltered behaviour is still available if you
+            -- genuinely want every file Neovim has ever touched, anywhere.
+            map('n', '<leader>fO', builtin.oldfiles, { desc = '[F]ind [O]ldfiles (unfiltered, all projects)' })
+
+            -- -----------------------------------------------------------------
+            -- Find/grep restricted to one file type -- prompts for an
+            -- extension first (e.g. "lua", "go", "tsx"), then searches only
+            -- that type. Use when you know exactly what kind of file you're
+            -- after and want to cut everything else out of the results.
+            -- -----------------------------------------------------------------
+            map('n', '<leader>ft', function()
+                vim.ui.input({ prompt = 'File type (extension, e.g. lua/go/tsx): ' }, function(ext)
+                    if not ext or ext == '' then return end
+                    ext = ext:gsub('^%.', '') -- tolerate a leading dot
+                    builtin.find_files({
+                        cwd = project_root(),
+                        hidden = true,
+                        find_command = { 'rg', '--files', '--hidden', '--glob', '!**/.git/*', '--glob', '*.' .. ext },
+                        prompt_title = 'Find *.' .. ext .. ' files',
+                    })
+                end)
+            end, { desc = '[F]ind by file [T]ype' })
+
+            map('n', '<leader>gt', function()
+                vim.ui.input({ prompt = 'Grep in file type (extension, e.g. lua/go/tsx): ' }, function(ext)
+                    if not ext or ext == '' then return end
+                    ext = ext:gsub('^%.', '')
+                    -- type_filter is telescope's native hook straight into
+                    -- ripgrep's --type-add/--type, no manual glob needed.
+                    builtin.live_grep({
+                        cwd = project_root(),
+                        type_filter = ext,
+                        prompt_title = 'Grep *.' .. ext .. ' files',
+                    })
+                end)
+            end, { desc = '[G]rep by file [T]ype' })
 
             -- -----------------------------------------------------------------
             -- <leader>s  GLOBAL/PROJECT search — root auto-detected via

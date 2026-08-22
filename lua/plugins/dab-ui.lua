@@ -91,8 +91,6 @@ return {
     },
 }
 
-
-
 -- <leader>db	Toggle breakpoint 
 -- <leader>dc	Continue 
 -- <leader>di	Step Into 
@@ -113,4 +111,3 @@ return {
 -- <leader>dq	Terminate session
 -- <leader>dv	Run to cursor
 -- <leader>dk	Step back (debugpy support limited)
-

@@ -73,27 +73,44 @@ return {
     }
 
     -- ---------------------------------------------------------------------
-    -- DAP keymaps — unified scheme, identical letters across every language
-    -- (see lang/go.lua, lang/java.lua). <leader>d(o/p/n/Q/x/i/I/C/a/v/g/B) is
-    -- Diagnostics (configs/lsp.lua, LspAttach) and shares zero letters with
-    -- this set on purpose — both are buffer-local and attach to the same
-    -- Python buffer, so an overlap here would silently shadow diagnostics.
+    -- Core DAP keymaps (breakpoint/continue/step/repl/run-last/terminate)
+    -- are NOT redeclared here anymore — they live once, globally, in
+    -- plugins/dap.lua, so Python/Go/Java all share identical letters.
     -- ---------------------------------------------------------------------
+
+    -- ---------------------------------------------------------------------
+    -- Frappe attach workflow, one command:
+    --   1. :FrappeDebugServe (or <leader>dA in a python buffer) opens a
+    --      terminal split at the bench root and runs debug-serve.sh, which
+    --      starts `bench serve` under debugpy with --wait-for-client on
+    --      127.0.0.1:5678.
+    --   2. Press <leader>dc (global DAP "Continue"), pick "Attach to
+    --      Frappe" — debugpy resumes bench serve and you're attached.
+    -- ---------------------------------------------------------------------
+    local function frappe_debug_serve()
+      local bench_dir = vim.fn.expand("~/calone/BACKEND")
+      local script = bench_dir .. "/debug-serve.sh"
+      if vim.fn.filereadable(script) == 0 then
+        vim.notify("debug-serve.sh not found: " .. script, vim.log.levels.ERROR)
+        return
+      end
+      vim.cmd("botright vsplit | terminal")
+      vim.cmd("startinsert")
+      vim.fn.chansend(vim.b.terminal_job_id, "cd " .. bench_dir .. " && ./debug-serve.sh\n")
+    end
+
+    vim.api.nvim_create_user_command("FrappeDebugServe", frappe_debug_serve, {
+      desc = "Start bench serve under debugpy (--wait-for-client) for Attach to Frappe",
+    })
+
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "python",
       callback = function(args)
-        local o = { buffer = args.buf, silent = true }
-        local map = function(lhs, rhs, desc)
-          vim.keymap.set("n", lhs, rhs, vim.tbl_extend("force", o, { desc = desc }))
-        end
-        map("<leader>db",  dap.toggle_breakpoint, "  [D]ap [B]reakpoint toggle")
-        map("<leader>dc",  dap.continue,           "  [D]ap [C]ontinue")
-        map("<leader>dso", dap.step_over,          "  [D]ap [S]tep [O]ver")
-        map("<leader>dsi", dap.step_into,          "  [D]ap [S]tep [I]nto")
-        map("<leader>dsO", dap.step_out,           "  [D]ap [S]tep [O]ut")
-        map("<leader>dr",  dap.repl.open,          "  [D]ap [R]epl open")
-        map("<leader>dl",  dap.run_last,           "  [D]ap Run [L]ast")
-        map("<leader>dq",  dap.terminate,          "  [D]ap [Q]uit/terminate")
+        vim.keymap.set("n", "<leader>dA", frappe_debug_serve, {
+          buffer = args.buf,
+          silent = true,
+          desc = "  [D]ap [A]ttach: start Frappe debug-serve.sh",
+        })
       end,
     })
   end,

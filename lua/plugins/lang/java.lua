@@ -74,20 +74,20 @@ return {
         -- Test runners keep their own dt/dT letters, same convention as Go.
         vim.keymap.set("n", "<leader>dt", jdtls.test_nearest_method, vim.tbl_extend("force", o, { desc = "󰙨  [D]ap [T]est method" }))
         vim.keymap.set("n", "<leader>dT", jdtls.test_class, vim.tbl_extend("force", o, { desc = "󰙨  [D]ap [T]est class" }))
-
+        --
         -- Unified DAP scheme — identical letters across every language,
         -- see lang/python.lua for the shared-namespace rationale.
-        local ok_dap, dap = pcall(require, "dap")
-        if ok_dap then
-          vim.keymap.set("n", "<leader>db",  dap.toggle_breakpoint, vim.tbl_extend("force", o, { desc = "  [D]ap [B]reakpoint toggle" }))
-          vim.keymap.set("n", "<leader>dc",  dap.continue,          vim.tbl_extend("force", o, { desc = "  [D]ap [C]ontinue" }))
-          vim.keymap.set("n", "<leader>dso", dap.step_over,         vim.tbl_extend("force", o, { desc = "  [D]ap [S]tep [O]ver" }))
-          vim.keymap.set("n", "<leader>dsi", dap.step_into,         vim.tbl_extend("force", o, { desc = "  [D]ap [S]tep [I]nto" }))
-          vim.keymap.set("n", "<leader>dsO", dap.step_out,          vim.tbl_extend("force", o, { desc = "  [D]ap [S]tep [O]ut" }))
-          vim.keymap.set("n", "<leader>dr",  dap.repl.open,         vim.tbl_extend("force", o, { desc = "  [D]ap [R]epl open" }))
-          vim.keymap.set("n", "<leader>dl",  dap.run_last,          vim.tbl_extend("force", o, { desc = "  [D]ap Run [L]ast" }))
-          vim.keymap.set("n", "<leader>dq",  dap.terminate,         vim.tbl_extend("force", o, { desc = "  [D]ap [Q]uit/terminate" }))
-        end
+        -- local ok_dap, dap = pcall(require, "dap")
+        -- if ok_dap then
+        --   vim.keymap.set("n", "<leader>db",  dap.toggle_breakpoint, vim.tbl_extend("force", o, { desc = "  [D]ap [B]reakpoint toggle" }))
+        --   vim.keymap.set("n", "<leader>dc",  dap.continue,          vim.tbl_extend("force", o, { desc = "  [D]ap [C]ontinue" }))
+        --   vim.keymap.set("n", "<leader>dso", dap.step_over,         vim.tbl_extend("force", o, { desc = "  [D]ap [S]tep [O]ver" }))
+        --   vim.keymap.set("n", "<leader>dsi", dap.step_into,         vim.tbl_extend("force", o, { desc = "  [D]ap [S]tep [I]nto" }))
+        --   vim.keymap.set("n", "<leader>dsO", dap.step_out,          vim.tbl_extend("force", o, { desc = "  [D]ap [S]tep [O]ut" }))
+        --   vim.keymap.set("n", "<leader>dr",  dap.repl.open,         vim.tbl_extend("force", o, { desc = "  [D]ap [R]epl open" }))
+        --   vim.keymap.set("n", "<leader>dl",  dap.run_last,          vim.tbl_extend("force", o, { desc = "  [D]ap Run [L]ast" }))
+        --   vim.keymap.set("n", "<leader>dq",  dap.terminate,         vim.tbl_extend("force", o, { desc = "  [D]ap [Q]uit/terminate" }))
+        -- end
       end,
     })
   end,

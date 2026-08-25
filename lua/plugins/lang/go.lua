@@ -84,17 +84,17 @@ return {
 
           -- Unified DAP scheme — identical letters across every language,
           -- see lang/python.lua for the shared-namespace rationale.
-          local ok_dap, dap = pcall(require, "dap")
-          if ok_dap then
-            map("n", "<leader>db",  dap.toggle_breakpoint, "󰴿  [D]ap [B]reakpoint toggle")
-            map("n", "<leader>dc",  dap.continue,          "󰐊  [D]ap [C]ontinue")
-            map("n", "<leader>dso", dap.step_over,         "󰆷  [D]ap [S]tep [O]ver")
-            map("n", "<leader>dsi", dap.step_into,         "󰆹  [D]ap [S]tep [I]nto")
-            map("n", "<leader>dsO", dap.step_out,          "󰆸  [D]ap [S]tep [O]ut")
-            map("n", "<leader>dr",  dap.repl.open,         "  [D]ap [R]epl open")
-            map("n", "<leader>dl",  dap.run_last,          "  [D]ap Run [L]ast")
-            map("n", "<leader>dq",  dap.terminate,         "󰓛  [D]ap [Q]uit/terminate")
-          end
+          -- local ok_dap, dap = pcall(require, "dap")
+          -- if ok_dap then
+          --   map("n", "<leader>db",  dap.toggle_breakpoint, "󰴿  [D]ap [B]reakpoint toggle")
+          --   map("n", "<leader>dc",  dap.continue,          "󰐊  [D]ap [C]ontinue")
+          --   map("n", "<leader>dso", dap.step_over,         "󰆷  [D]ap [S]tep [O]ver")
+          --   map("n", "<leader>dsi", dap.step_into,         "󰆹  [D]ap [S]tep [I]nto")
+          --   map("n", "<leader>dsO", dap.step_out,          "󰆸  [D]ap [S]tep [O]ut")
+          --   map("n", "<leader>dr",  dap.repl.open,         "  [D]ap [R]epl open")
+          --   map("n", "<leader>dl",  dap.run_last,          "  [D]ap Run [L]ast")
+          --   map("n", "<leader>dq",  dap.terminate,         "󰓛  [D]ap [Q]uit/terminate")
+          -- end
         end,
       })
     end,

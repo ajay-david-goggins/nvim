@@ -108,25 +108,25 @@ return {
 			},
 
 			{
-				"<leader>dc",
+				"<leader>dbc",
 				"<cmd>DBUIAddConnection<CR>",
 				desc = "[D]atabase [C]onnection Add",
 			},
 
 			{
-				"<leader>df",
+				"<leader>dbf",
 				"<cmd>DBUIFindBuffer<CR>",
 				desc = "[D]atabase [F]ind Buffer",
 			},
 
 			{
-				"<leader>dr",
+				"<leader>dbr",
 				"<cmd>DBUIRenameBuffer<CR>",
 				desc = "[D]atabase [R]ename Buffer",
 			},
 
 			{
-				"<leader>dq",
+				"<leader>dbq",
 				"<cmd>DBUILastQueryInfo<CR>",
 				desc = "[D]atabase Last [Q]uery Info",
 			},

@@ -9,7 +9,7 @@ return {
   -- stay per-language since "test" has no universal DAP equivalent.
   keys = {
     { "<leader>db",  function() require("dap").toggle_breakpoint() end, desc = "  [D]ap [B]reakpoint toggle" },
-    { "<leader>dc",  function() require("dap").continue() end,          desc = "  [D]ap [C]ontinue / Start" },
+    { "<leader>dc",  function() require("dap").continue({ new = true }) end, desc = "  [D]ap [C]ontinue / Start" },
     { "<leader>dso", function() require("dap").step_over() end,         desc = "  [D]ap [S]tep [O]ver" },
     { "<leader>dsi", function() require("dap").step_into() end,         desc = "  [D]ap [S]tep [I]nto" },
     { "<leader>dsO", function() require("dap").step_out() end,          desc = "  [D]ap [S]tep [O]ut" },

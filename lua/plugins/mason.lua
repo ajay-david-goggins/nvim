@@ -88,13 +88,66 @@ return {
 	-- working normally.
 	-- =====================================================================
 
-	{
-		"jay-babu/mason-nvim-dap.nvim",
-		dependencies = { "williamboman/mason.nvim", "mfussenegger/nvim-dap" },
-		opts = {
-			ensure_installed = { "java-debug-adapter", "java-test", "debugpy", "delve" },
-			automatic_installation = true,
-			handlers = {},
-		},
-	},
+  {
+    "jay-babu/mason-nvim-dap.nvim",
+    dependencies = { "williamboman/mason.nvim", "mfussenegger/nvim-dap" },
+    opts = {
+      ensure_installed = { "java-debug-adapter", "java-test", "debugpy", "delve" },
+      automatic_installation = true,
+      handlers = {
+        python = function(source_name)
+          local dap = require("dap")
+          local mason_pkg = vim.fn.expand("~/.local/share/nvim/mason/packages")
+          dap.adapters.python = function(cb, config)
+            if config.request == "attach" then
+              local host = (config.connect or config).host or "127.0.0.1"
+              local port = (config.connect or config).port
+              cb({ type = "server", host = host, port = port })
+            else
+              cb({
+                type = "executable",
+                command = mason_pkg .. "/debugpy/venv/bin/python",
+                args = { "-m", "debugpy.adapter" },
+              })
+            end
+          end
+
+          local function get_python()
+            local candidates = {
+              vim.fn.getcwd() .. "/.venv/bin/python",
+              vim.fn.getcwd() .. "/env/bin/python",
+              vim.fn.getcwd() .. "/../env/bin/python",
+            }
+            for _, p in ipairs(candidates) do
+              if vim.fn.executable(p) == 1 then return p end
+            end
+            return vim.fn.exepath("python3") or "python"
+          end
+
+          dap.configurations.python = {
+            {
+              type = "python",
+              request = "attach",
+              name = "Attach to Frappe",
+              connect = { host = "127.0.0.1", port = 5678 },
+              justMyCode = false,
+              pathMappings = {
+                { localRoot = vim.fn.expand("~/calone/BACKEND"), remoteRoot = vim.fn.expand("~/calone/BACKEND") },
+              },
+            },
+            { type = "python", request = "launch", name = "Launch file", program = "${file}", pythonPath = get_python },
+            {
+              type = "python",
+              request = "launch",
+              name = "Launch with args",
+              program = "${file}",
+              args = function() return vim.split(vim.fn.input("Args: "), " ", { trimempty = true }) end,
+              pythonPath = get_python,
+            },
+            { type = "python", request = "launch", name = "pytest: current file", module = "pytest", args = { "${file}", "-v" }, pythonPath = get_python },
+          }
+        end,
+      },
+    },
+  },
 }

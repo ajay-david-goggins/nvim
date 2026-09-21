@@ -22,10 +22,10 @@ return {
   end,
   ft = { "vimwiki", "markdown" },
   keys = {
-    { "<leader>ww", "<Plugin>VimwikiIndex",         desc = "  [W]iki [W]ww index" },
-    { "<leader>wt", "<Plugin>VimwikiTabIndex",      desc = "  [W]iki index in new [T]ab" },
-    { "<leader>ws", "<Plugin>VimwikiUISelect",      desc = "  [W]iki [S]elect (multi-wiki)" },
-    { "<leader>wi", "<Plugin>VimwikiDiaryIndex",    desc = "  [W]iki diary [I]ndex" },
-    { "<leader>w<leader>w", "<Plugin>VimwikiMakeDiaryNote", desc = "  [W]iki new diary note" },
+    { "<leader>ww",         "<cmd>VimwikiIndex<CR>",         desc = "[W]iki [W]iki index" },
+    { "<leader>wt",         "<cmd>VimwikiTabIndex<CR>",      desc = "[W]iki index in [T]ab" },
+    { "<leader>ws",         "<cmd>VimwikiUISelect<CR>",      desc = "[W]iki [S]elect" },
+    { "<leader>wi",         "<cmd>VimwikiDiaryIndex<CR>",    desc = "[W]iki d[I]ary" },
+    { "<leader>w<leader>w", "<cmd>VimwikiMakeDiaryNote<CR>", desc = "[W]iki new diary note" },
   },
 }

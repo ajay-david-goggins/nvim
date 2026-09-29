@@ -138,51 +138,14 @@ return {
             end, { desc = '[F]ind [D]iagnostics (buffer)' })
 
             -- -----------------------------------------------------------------
-            -- Recent files (§: oldfiles was showing stale/unrelated entries)
-            --
-            -- builtin.oldfiles just lists vim.v.oldfiles as-is: every file
-            -- Neovim has EVER opened across EVERY project on this machine,
-            -- including ones that have since been deleted or moved. That's
-            -- exactly the "sometimes shows unexpected stuff" symptom -- it's
-            -- not scoped to the current project and never checks the file
-            -- still exists.
-            --
-            -- This custom picker filters vim.v.oldfiles down to files that
-            -- (a) are still on disk right now, and (b) live under the
-            -- current project root -- before Telescope ever sees them.
+            -- Recent files (scoped to project root, includes current session)
             -- -----------------------------------------------------------------
             map('n', '<leader>f.', function()
-                local root = project_root()
-                local results = {}
-                local seen = {}
-                for _, file in ipairs(vim.v.oldfiles) do
-                    local abs = vim.fn.fnamemodify(file, ':p')
-                    if not seen[abs]
-                        and abs:sub(1, #root) == root
-                        and vim.loop.fs_stat(abs) ~= nil
-                    then
-                        seen[abs] = true
-                        table.insert(results, abs)
-                    end
-                end
-
-                require('telescope.pickers').new({}, {
-                    prompt_title = 'Recent Files (project, existing only)',
-                    finder = require('telescope.finders').new_table({
-                        results = results,
-                        entry_maker = function(entry)
-                            return {
-                                value = entry,
-                                display = vim.fn.fnamemodify(entry, ':.'),
-                                ordinal = entry,
-                                path = entry,
-                            }
-                        end,
-                    }),
-                    sorter = require('telescope.config').values.file_sorter({}),
-                    previewer = require('telescope.config').values.file_previewer({}),
-                }):find()
-            end, { desc = '[F]ind Recent [.]files (project, existing only)' })
+                builtin.oldfiles({
+                    cwd = project_root(),
+                    prompt_title = 'Recent Files (Project)',
+                })
+            end, { desc = '[F]ind Recent [.]files (project)' })
 
             -- The old, unfiltered behaviour is still available if you
             -- genuinely want every file Neovim has ever touched, anywhere.

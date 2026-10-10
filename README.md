@@ -73,17 +73,31 @@ Install any Nerd Font (e.g. **JetBrains Mono Nerd Font**, **FiraCode Nerd Font**
 
 ---
 
-## 🚀 Installation & Switching to this Branch
+## 🚀 Quick Automated Setup
 
-Clone or switch to the `optimized_for_mobile` branch:
+You can set up your entire mobile environment automatically with the included bootstrap script:
 
 ```bash
-# Switch to the branch
-git checkout optimized_for_mobile
+# Run the automated mobile setup
+chmod +x ./scripts/setup-mobile.sh
+./scripts/setup-mobile.sh
 
 # Launch Neovim
 nvim
 ```
+
+The script will automatically:
+1. Detect your architecture (ARM64 / aarch64).
+2. Check and prompt for any missing system tools (`clangd`, `ripgrep`, etc.).
+3. Download and cache **JetBrains Mono Nerd Font** (and export a copy to `/sdcard/Download/` for Termux).
+4. Verify non-blocking mobile clipboard compatibility (`OSC 52` with `/dev/tty`).
+5. Run Neovim pre-flight tests to ensure plugins and LSPs launch cleanly.
+
+---
+
+## 🛠️ Manual Prerequisites (Optional)
+
+If you prefer installing components manually instead of using `./scripts/setup-mobile.sh`:
 
 Lazy.nvim will automatically install all plugins on first launch. Run `:Lazy sync` or `:checkhealth` if needed.
 

@@ -58,10 +58,16 @@ return {
                     --     "%.min%.js$",
                     --     "%.min%.css$",
                     -- },
+                    layout_strategy = vim.o.columns < 85 and "vertical" or "horizontal",
                     layout_config = {
                         horizontal = {
                             prompt_position = "top",
                             preview_width = 0.45,
+                        },
+                        vertical = {
+                            prompt_position = "top",
+                            mirror = false,
+                            preview_height = 0.4,
                         },
                     },
                     mappings = {
@@ -86,9 +92,9 @@ return {
                 }
             })
 
-            -- Load extensions
-            telescope.load_extension('fzf')
-            telescope.load_extension('ui-select')
+            -- Load extensions safely
+            pcall(telescope.load_extension, 'fzf')
+            pcall(telescope.load_extension, 'ui-select')
 
             -- =================================================================
             -- Root detection (§5)

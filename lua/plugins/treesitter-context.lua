@@ -16,8 +16,8 @@ return {
   event = { "BufReadPost", "BufNewFile" },
   opts = {
     enable = true,
-    max_lines = 3,          -- cap so a deeply nested scope doesn't eat the window
-    min_window_height = 12, -- don't bother in small splits
+    max_lines = 2,          -- cap to 2 lines so context does not consume vertical space on mobile
+    min_window_height = 15, -- don't activate in small splits or tight mobile windows
     line_numbers = true,
     multiline_threshold = 1,
     trim_scope = "outer",

@@ -10,9 +10,7 @@ return {
 	build = ":TSUpdate",
 	dependencies = { "windwp/nvim-ts-autotag" },
 	config = function()
-		require("nvim-treesitter").setup()
-
-		require("nvim-treesitter").install({
+		local langs = {
 			"lua",
 			"vim",
 			"vimdoc",
@@ -38,7 +36,33 @@ return {
 			"yaml",
 			"toml",
 			"regex",
-		})
+		}
+
+		local ok_configs, configs = pcall(require, "nvim-treesitter.configs")
+		if ok_configs then
+			configs.setup({
+				ensure_installed = langs,
+				sync_install = false,
+				auto_install = true,
+				highlight = {
+					enable = true,
+					disable = function(lang, buf)
+						local max_filesize = 100 * 1024 -- 100 KB
+						local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
+						if ok and stats and stats.size > max_filesize then
+							return true
+						end
+					end,
+				},
+				indent = { enable = true },
+			})
+		else
+			local ok_ts, ts = pcall(require, "nvim-treesitter")
+			if ok_ts then
+				if ts.setup then pcall(ts.setup) end
+				if ts.install then pcall(ts.install, langs) end
+			end
+		end
 
 		vim.api.nvim_create_autocmd("FileType", {
 			callback = function(args)
@@ -47,7 +71,10 @@ return {
 					return
 				end
 				vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-				vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+				local ok_ts = pcall(require, "nvim-treesitter")
+				if ok_ts and package.loaded["nvim-treesitter"] and require("nvim-treesitter").indentexpr then
+					vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+				end
 			end,
 		})
 	end,

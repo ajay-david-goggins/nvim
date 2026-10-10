@@ -10,11 +10,18 @@ return {
     keymap = { preset = "default" }, -- <C-y> accept, <C-n>/<C-p> select, <C-space> open docs
     appearance = { nerd_font_variant = "mono" },
     completion = {
-      documentation = { auto_show = true, auto_show_delay_ms = 200 },
-      menu = { border = "rounded" },
+      documentation = {
+        auto_show = true,
+        auto_show_delay_ms = 250,
+        window = { border = "rounded", max_height = 10, max_width = 50 },
+      },
+      menu = {
+        border = "rounded",
+        max_height = 8,
+      },
       list = { selection = { preselect = false } },
     },
-    signature = { enabled = true, window = { border = "rounded" } },
+    signature = { enabled = true, window = { border = "rounded", max_height = 6 } },
     sources = {
       default = { "lsp", "path", "snippets", "buffer" },
     },

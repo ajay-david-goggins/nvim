@@ -1,21 +1,26 @@
 return {
     "nvim-tree/nvim-tree.lua",
     config = function()
-        -- Keymap to toggle the explorer
+        -- Keymaps to toggle and navigate explorer
         vim.keymap.set("n", "<leader>e", "<CMD>NvimTreeToggle<CR>", { desc = "Toggle [E]xplorer" })
+        vim.keymap.set("n", "<leader>eo", function()
+            vim.cmd("NvimTreeOpen")
+            vim.cmd("NvimTreeResize 30")
+            vim.cmd("NvimTreeRefresh")
+        end, { desc = "Open Tree & Resize safely (mobile)" })
+        vim.keymap.set("n", "<leader>er", "<CMD>NvimTreeFindFile<CR>", { desc = "Refocus on current file" })
 
         require("nvim-tree").setup({
-            -- 1. THIS SECTIONS FIXES THE SYNCING ISSUE
             update_focused_file = {
                 enable = true,
-                update_root = true, -- Set to true if you want the root to change to the file's directory
+                update_root = false,
                 ignore_list = {},
             },
             view = {
-                width = 50,
+                width = 30, -- compact width for mobile displays
                 side = "left",
-                number = true,
-                relativenumber = true,
+                number = false, -- disable line numbers in tree to save mobile screen space
+                relativenumber = false,
             },
             renderer = {
                 indent_markers = {

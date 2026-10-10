@@ -13,6 +13,12 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
+-- Prepend Mason bin directory to PATH so all installed tools are directly reachable
+local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
+if vim.fn.isdirectory(mason_bin) == 1 then
+    vim.env.PATH = mason_bin .. ":" .. vim.env.PATH
+end
+
 local opts = {
     change_detection = {
         notify = false, -- config update change detection notification off 

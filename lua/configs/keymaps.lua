@@ -52,11 +52,11 @@ end, { desc = "Toggle word wrap for every file", silent = true }) -- every file
 
 K("n", "<leader>a", "ggVG", { desc = "Select [A]ll (whole buffer)" }) -- desc was mislabeled ("Make window narrower")
 
--- auto save
+-- auto save (safely ignores unnamed or special buffers)
 vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
     pattern = "*",
     callback = function()
-        if vim.bo.modified and vim.bo.modifiable then
+        if vim.bo.modified and vim.bo.modifiable and vim.bo.buftype == "" and vim.fn.empty(vim.fn.expand("%")) == 0 then
             vim.cmd("silent! write")
         end
     end,

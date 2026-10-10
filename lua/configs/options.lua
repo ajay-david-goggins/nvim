@@ -1,19 +1,20 @@
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.signcolumn = "yes"
-vim.opt.numberwidth = 4
+vim.opt.numberwidth = 2 -- 2 chars saves screen columns on narrow mobile screens
 vim.opt.wrap = true
-vim.opt.scrolloff = 8
-vim.opt.sidescrolloff = 8
+vim.opt.scrolloff = 4 -- optimal for shorter mobile terminal displays
+vim.opt.sidescrolloff = 4
 vim.opt.swapfile = false
 vim.opt.undofile = true
 vim.opt.backup = false
 vim.opt.writebackup = false
+vim.opt.pumheight = 10 -- limit popup menu height on mobile displays
 
 vim.opt.expandtab = true
-vim.opt.shiftwidth = 2 -- convert the >> or << with number of space
-vim.opt.tabstop = 2 -- number of space character inserted for /t
-vim.opt.softtabstop = 2 -- number of space character insteader for <Tab> key
+vim.opt.shiftwidth = 2 -- convert >> or << with number of spaces
+vim.opt.tabstop = 2 -- number of spaces for /t
+vim.opt.softtabstop = 2 -- number of spaces for <Tab> key
 vim.opt.smartindent = true -- enable smart indentation
 vim.opt.breakindent = true
 
@@ -21,19 +22,53 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.opt.mouse = "a"
 vim.opt.conceallevel = 3
+
+-- Mobile / NetHunter Rootless / PRoot Clipboard Integration
+-- Uses Termux clipboard or built-in OSC 52 (which sends base64 copied text directly to
+-- the terminal emulator host, copying to Android system clipboard without X11)
+if vim.fn.executable("termux-clipboard-set") == 1 then
+    vim.g.clipboard = {
+        name = "termux-clipboard",
+        copy = {
+            ["+"] = "termux-clipboard-set",
+            ["*"] = "termux-clipboard-set",
+        },
+        paste = {
+            ["+"] = "termux-clipboard-get",
+            ["*"] = "termux-clipboard-get",
+        },
+        cache_enabled = 0,
+    }
+elseif not vim.env.DISPLAY and not vim.env.WAYLAND_DISPLAY then
+    local ok_osc52, osc52 = pcall(require, "vim.ui.clipboard.osc52")
+    if ok_osc52 then
+        vim.g.clipboard = {
+            name = "OSC 52",
+            copy = {
+                ["+"] = osc52.copy("+"),
+                ["*"] = osc52.copy("*"),
+            },
+            paste = {
+                ["+"] = osc52.paste("+"),
+                ["*"] = osc52.paste("*"),
+            },
+        }
+    end
+end
 vim.opt.clipboard = "unnamedplus"
+
 vim.opt.fileencoding = "utf-8"
 vim.opt.splitbelow = true
 vim.opt.splitright = true
 vim.opt.termguicolors = true
 vim.opt.showmode = true
 vim.opt.cursorline = true
-vim.opt.cursorcolumn = true
+vim.opt.cursorcolumn = false -- disable cursorcolumn on mobile to prevent redraw lag and clutter
 
--- Fucking execution Timing
-vim.opt.timeoutlen = 300 -- for keymap execution time out limit in 0.3 sec
-vim.opt.updatetime = 250 -- this is responsible for showing error like git or backup file does
-vim.opt.ttimeoutlen = 10 -- this is terminal time out lenth execute <Esc> <Tab> immediately
+-- Execution Timing
+vim.opt.timeoutlen = 300 -- keymap timeout in 0.3s
+vim.opt.updatetime = 250 -- git/diagnostics update time
+vim.opt.ttimeoutlen = 10 -- fast <Esc> / <Tab> execution in terminal
 
 vim.opt.hlsearch = true
 vim.opt.ignorecase = true

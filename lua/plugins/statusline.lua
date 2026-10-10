@@ -26,7 +26,10 @@ return {
       },
       sections = {
         lualine_a = { "mode" },
-        lualine_b = { "branch", "diff" },
+        lualine_b = {
+          "branch",
+          { "diff", cond = function() return vim.o.columns > 70 end },
+        },
         lualine_c = {
           {
             -- Diagnostics count for the current buffer, right where you're
@@ -46,8 +49,12 @@ return {
             symbols = { modified = " ●", readonly = " 󰌾", unnamed = "[No Name]" },
           },
         },
-        lualine_x = { "encoding", "fileformat", "filetype" },
-        lualine_y = { "progress" },
+        lualine_x = {
+          { "encoding", cond = function() return vim.o.columns > 85 end },
+          { "fileformat", cond = function() return vim.o.columns > 85 end },
+          "filetype",
+        },
+        lualine_y = { { "progress", cond = function() return vim.o.columns > 60 end } },
         lualine_z = { "location" },
       },
       inactive_sections = {

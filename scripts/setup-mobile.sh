@@ -107,10 +107,51 @@ if [ -d "/sdcard/Download" ] && [ -w "/sdcard/Download" ]; then
     fi
 fi
 
-# 4. Verify Mobile Clipboard Configuration
-log_info "Verifying mobile clipboard setup..."
+# 4. Mobile Clipboard Configuration & Helper (Neovim & Lazygit)
+log_info "Configuring universal mobile clipboard helper and tools..."
+mkdir -p "$HOME/.local/bin"
+cat << 'EOF' > "$HOME/.local/bin/clip-copy"
+#!/usr/bin/env bash
+# Universal clipboard copy helper for mobile (NetHunter / Termux / Linux)
+if [ $# -gt 0 ]; then
+    TEXT="$*"
+else
+    TEXT="$(cat)"
+fi
+
+if [ -w /dev/tty ]; then
+    B64=$(printf "%s" "$TEXT" | base64 | tr -d '\r\n')
+    printf "\033]52;c;%s\a" "$B64" > /dev/tty 2>/dev/null || true
+    printf "\033]52;c;%s\033\\" "$B64" > /dev/tty 2>/dev/null || true
+fi
+
+if command -v termux-clipboard-set >/dev/null 2>&1; then
+    printf "%s" "$TEXT" | termux-clipboard-set 2>/dev/null || true
+fi
+
+if [ -n "${DISPLAY:-}" ] && command -v xclip >/dev/null 2>&1; then
+    printf "%s" "$TEXT" | xclip -selection clipboard 2>/dev/null || true
+fi
+EOF
+chmod +x "$HOME/.local/bin/clip-copy"
+log_success "Installed universal clipboard helper: ~/.local/bin/clip-copy"
+
+# Configure Lazygit clipboard integration
+if command -v lazygit >/dev/null 2>&1; then
+    mkdir -p "$HOME/.config/lazygit"
+    if ! grep -q "copyToClipboardCmd" "$HOME/.config/lazygit/config.yml" 2>/dev/null; then
+        cat << 'EOF' >> "$HOME/.config/lazygit/config.yml"
+os:
+  copyToClipboardCmd: 'clip-copy {{text}}'
+EOF
+        log_success "Configured lazygit mobile clipboard in ~/.config/lazygit/config.yml"
+    else
+        log_success "Lazygit clipboard configuration verified in ~/.config/lazygit/config.yml"
+    fi
+fi
+
 if [ -w "/dev/tty" ]; then
-    log_success "/dev/tty is writable (OSC 52 escape sequences will reach Android terminal directly)."
+    log_success "/dev/tty is writable (OSC 52 escape sequences reach Android terminal directly)."
 else
     log_warn "/dev/tty is not directly writable. Standard TUI channels will be used."
 fi

@@ -47,13 +47,14 @@ return {
 				"cssls",
 				"emmet_ls",
 				"eslint",
-				"clangd",
 				"tailwindcss",
 				"angularls",
 				-- python
 				"pyright",
 				"ruff",
-				-- go: deliberately NOT mason-managed, see note below.
+				-- go & c/c++: deliberately NOT mason-managed on ARM64.
+				-- clangd is installed via system apt (`apt install clangd`)
+				-- because Mason does not supply precompiled ARM64 Linux binaries.
 			},
 			-- vim.lsp.enable() is called explicitly in configs/lsp.lua instead
 			automatic_enable = false,
@@ -92,7 +93,7 @@ return {
     "jay-babu/mason-nvim-dap.nvim",
     dependencies = { "williamboman/mason.nvim", "mfussenegger/nvim-dap" },
     opts = {
-      ensure_installed = { "java-debug-adapter", "java-test", "debugpy", "delve" },
+      ensure_installed = { "java-debug-adapter", "java-test", "debugpy" },
       automatic_installation = true,
       handlers = {
         python = function(source_name)

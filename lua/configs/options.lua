@@ -40,20 +40,45 @@ if vim.fn.executable("termux-clipboard-set") == 1 then
         cache_enabled = 0,
     }
 elseif not vim.env.DISPLAY and not vim.env.WAYLAND_DISPLAY then
-    local ok_osc52, osc52 = pcall(require, "vim.ui.clipboard.osc52")
-    if ok_osc52 then
-        vim.g.clipboard = {
-            name = "OSC 52",
-            copy = {
-                ["+"] = osc52.copy("+"),
-                ["*"] = osc52.copy("*"),
-            },
-            paste = {
-                ["+"] = osc52.paste("+"),
-                ["*"] = osc52.paste("*"),
-            },
+    -- Safe paste fallback: NEVER query the terminal for OSC 52 read/paste, because
+    -- mobile terminals (Termux/NetHunter) refuse read queries for security, which causes
+    -- Neovim to hang with "Waiting for OSC 52 response from the terminal...".
+    -- Instead, paste from Neovim's internal unnamed register.
+    local function paste_fallback()
+        return {
+            vim.fn.split(vim.fn.getreg('"'), "\n"),
+            vim.fn.getregtype('"'),
         }
     end
+
+    local function copy_osc52(lines)
+        local s = table.concat(lines, "\n")
+        local b64 = vim.base64.encode(s)
+        -- Send standard OSC 52 escape sequences:
+        -- 1. Standard ST terminator via Neovim UI channel
+        local seq_st = string.format("\027]52;c;%s\027\\", b64)
+        vim.api.nvim_ui_send(seq_st)
+        -- 2. BEL terminator directly to /dev/tty for Termux/mobile terminal compatibility
+        pcall(function()
+            local tty = io.open("/dev/tty", "w")
+            if tty then
+                tty:write(string.format("\027]52;c;%s\a", b64))
+                tty:close()
+            end
+        end)
+    end
+
+    vim.g.clipboard = {
+        name = "OSC 52",
+        copy = {
+            ["+"] = copy_osc52,
+            ["*"] = copy_osc52,
+        },
+        paste = {
+            ["+"] = paste_fallback,
+            ["*"] = paste_fallback,
+        },
+    }
 end
 vim.opt.clipboard = "unnamedplus"
 

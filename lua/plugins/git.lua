@@ -56,9 +56,10 @@ return {
                 current_line_blame_formatter = "<abbrev_sha> · <author> · <author_time:%d %b %Y> · <summary>",
 
                 diff_opts = {
-                    algorithm        = "myers",
-                    internal         = true,
-                    indent_heuristic = true,
+                    algorithm                       = "myers",
+                    internal                        = true,
+                    indent_heuristic                = true,
+                    ignore_whitespace_change_at_eol = true,
                 },
 
                 on_attach = function(bufnr)

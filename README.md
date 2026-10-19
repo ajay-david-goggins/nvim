@@ -266,7 +266,12 @@ Leader key: **`<Space>`**
 | `<leader>ws` | Wiki UI selector |
 | `<leader>wi` | Open diary index |
 | `<leader>w<leader>w` | Create / open today's diary note |
-| `<leader>m` | Toggle task checkbox `[ ]` ↔ `[X]` |
+| `<leader>m` | Smart checkbox toggle `[ ]` ↔ `[x]` (Normal & Visual mode batch toggle) |
+| `<leader>wn` | Insert new todo item (`- [ ] `) below & enter Insert mode |
+| `<leader>wgp` | Wiki Git Push (sync notes to GitHub repo) |
+| `<leader>wgP` | Wiki Git Pull (rebase latest notes from GitHub) |
+| `<leader>wgs` | Wiki Git Status (check status & E2E encryption) |
+| `<leader>wgl` | Open LazyGit UI inside Wiki folder |
 
 ### 9. Database Management (`vim-dadbod`)
 

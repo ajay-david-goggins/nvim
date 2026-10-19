@@ -20,7 +20,8 @@ return {
             { "<leader>g", group = "[G]it" },
             { "<leader>s", group = "[S]earch (project root)" },
             { "<leader>t", group = "[T]oggle" },
-            { "<leader>w", group = "[W]indow" },
+            { "<leader>w", group = "[W]indow / [W]iki" },
+            { "<leader>wg", group = "[W]iki [G]it" },
             -- { "<leader>J", group = "[J]ava" },
         })
     end,

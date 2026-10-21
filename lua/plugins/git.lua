@@ -30,6 +30,29 @@ return {
         "lewis6991/gitsigns.nvim",
         event = { "BufReadPre", "BufNewFile" },
         config = function()
+            -- Transparent smudge hook for git-crypt encrypted repositories:
+            -- By default, gitsigns queries raw git objects which returns encrypted ciphertext
+            -- (^@GITCRYPT^@...). We decrypt it through git-crypt smudge so gitsigns diffs against
+            -- the actual decrypted plaintext.
+            local ok_repo, git_repo = pcall(require, "gitsigns.git.repo")
+            if ok_repo and git_repo and git_repo.get_show_text then
+                local orig_get_show_text = git_repo.get_show_text
+                git_repo.get_show_text = function(self, object, encoding)
+                    local stdout, stderr = orig_get_show_text(self, object, encoding)
+                    if stdout and stdout[1] and stdout[1]:find("GITCRYPT") then
+                        local raw = table.concat(stdout, "\n")
+                        local res = vim.system({ "git-crypt", "smudge" }, { stdin = raw, cwd = self.toplevel }):wait()
+                        if res.code == 0 and res.stdout then
+                            stdout = vim.split(res.stdout, "\n", { plain = true })
+                            if #stdout > 0 and stdout[#stdout] == "" then
+                                stdout[#stdout] = nil
+                            end
+                        end
+                    end
+                    return stdout, stderr
+                end
+            end
+
             require("gitsigns").setup({
 
                 signs = {

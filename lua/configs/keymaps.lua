@@ -79,3 +79,24 @@ vim.keymap.set("v", "<leader>fsc", function()
     })
     print("Prettier: Formatted selected code! 🎯")
 end, { desc = "[F]ormat [S]eleced [C]ode only" })
+
+-- Standard LSP navigation fallbacks (gd, <C-]>, K)
+K("n", "gd", function()
+    if #vim.lsp.get_clients({ bufnr = 0 }) > 0 then
+        vim.lsp.buf.definition()
+    else
+        vim.cmd("normal! gd")
+    end
+end, { desc = "Go to Definition" })
+
+K("n", "<C-]>", function()
+    if #vim.lsp.get_clients({ bufnr = 0 }) > 0 then
+        vim.lsp.buf.definition()
+    else
+        local ok, _ = pcall(vim.cmd, "tag " .. vim.fn.expand("<cword>"))
+        if not ok then
+            vim.notify("No LSP attached and no tags file found.", vim.log.levels.WARN)
+        end
+    end
+end, { desc = "Go to Definition / Tag" })
+

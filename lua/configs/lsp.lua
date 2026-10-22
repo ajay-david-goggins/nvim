@@ -24,7 +24,7 @@ end
 
 vim.lsp.config("*", {
   capabilities = capabilities,
-  root_markers = { ".git" },
+  root_markers = { ".git", "sites", "Procfile", "pyproject.toml", "package.json" },
 })
 
 -- Rounded floating windows everywhere (hover, signature help, diagnostics).
@@ -132,6 +132,12 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
 
     -- Navigation
+    map("n", "gd", vim.lsp.buf.definition, "󰈮  Go to [C]ode [D]efinition")
+    map("n", "<C-]>", vim.lsp.buf.definition, "󰈮  Go to [C]ode [D]efinition")
+    map("n", "gD", vim.lsp.buf.declaration, "󰈮  Go to [C]ode [[D]]eclaration")
+    map("n", "gi", vim.lsp.buf.implementation, "󰡱  Go to [C]ode [I]mplementation")
+    map("n", "gr", function() require("telescope.builtin").lsp_references() end, "󰈇  Go to [C]ode [R]eferences")
+    map("n", "K", vim.lsp.buf.hover, "󰋖  [C]ode [H]over Docs")
     map("n", "<leader>ch", vim.lsp.buf.hover, "󰋖  [C]ode [H]over Docs")
     map("n", "<leader>cd", vim.lsp.buf.definition, "󰈮  Go to [C]ode [D]efinition")
     map("n", "<leader>cD", vim.lsp.buf.declaration, "󰈮  Go to [C]ode [[D]]eclaration")

@@ -135,7 +135,14 @@ return {
                 { localRoot = vim.fn.expand("~/calone/BACKEND"), remoteRoot = vim.fn.expand("~/calone/BACKEND") },
               },
             },
-            { type = "python", request = "launch", name = "Launch file", program = "${file}", pythonPath = get_python },
+            {
+              type = "python",
+              request = "launch",
+              name = "Launch file",
+              program = "${file}",
+              pythonPath = get_python,
+              console = "integratedTerminal",
+            },
             {
               type = "python",
               request = "launch",
@@ -143,6 +150,7 @@ return {
               program = "${file}",
               args = function() return vim.split(vim.fn.input("Args: "), " ", { trimempty = true }) end,
               pythonPath = get_python,
+              console = "integratedTerminal",
             },
             { type = "python", request = "launch", name = "pytest: current file", module = "pytest", args = { "${file}", "-v" }, pythonPath = get_python },
           }

@@ -21,6 +21,8 @@ return {
   config = function()
     local dap = require("dap")
 
+    dap.defaults.fallback.terminal_win_cmd = "belowright 10new"
+
     vim.fn.sign_define("DapBreakpoint", {
       text = "●",
       texthl = "DiagnosticError",

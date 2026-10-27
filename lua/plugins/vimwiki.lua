@@ -7,6 +7,7 @@
 -- Hardcoded Wiki Git repository URL & path
 local wiki_repo = "https://github.com/ajay-david-goggins/vimwiki_notes.git"
 local wiki_dir = vim.fn.expand("~/notes/wiki")
+local vault_key = vim.fn.expand("~/.vimwiki_vault.key")
 
 -- Helper: Push notes to remote repo
 local function wiki_git_push(commit_msg)
@@ -73,6 +74,25 @@ local function wiki_git_pull()
   end)
 end
 
+-- Helper: Unlock encrypted wiki notes using ~/.vimwiki_vault.key
+local function wiki_git_unlock()
+  if vim.fn.filereadable(vault_key) ~= 1 then
+    vim.notify("Master key not found at " .. vault_key, vim.log.levels.ERROR, { title = "VimWiki Git" })
+    return
+  end
+  vim.notify("Unlocking encrypted notes with git-crypt...", vim.log.levels.INFO, { title = "VimWiki Git" })
+  vim.system({ "git-crypt", "unlock", vault_key }, { cwd = wiki_dir, text = true }, function(res)
+    vim.schedule(function()
+      if res.code == 0 then
+        vim.notify("󰄬 Notes vault successfully unlocked!", vim.log.levels.INFO, { title = "VimWiki Git" })
+        vim.cmd("checktime")
+      else
+        vim.notify("Unlock failed:\n" .. (res.stderr or res.stdout or ""), vim.log.levels.ERROR, { title = "VimWiki Git" })
+      end
+    end)
+  end)
+end
+
 -- Helper: Check wiki git status + encryption state
 local function wiki_git_status()
   vim.system({ "git", "-C", wiki_dir, "status", "-sb" }, { text = true }, function(res)
@@ -80,7 +100,10 @@ local function wiki_git_status()
       if res.code == 0 then
         local out = vim.trim(res.stdout or "")
         local is_encrypted = vim.fn.filereadable(wiki_dir .. "/.gitattributes") == 1
-        local enc_badge = is_encrypted and "\n🔒 E2E Encryption (.gitattributes active)" or "\n⚠️ Unencrypted (plain text repo)"
+        local is_unlocked = vim.fn.isdirectory(wiki_dir .. "/.git/git-crypt/keys") == 1
+        local enc_badge = is_encrypted
+            and (is_unlocked and "\n🔒 E2E Encryption (Active & Unlocked)" or "\n🔒 E2E Encryption (Locked - run <leader>wgu)")
+          or "\n⚠️ Unencrypted (plain text repo)"
         vim.notify((out ~= "" and out or "Clean working tree") .. enc_badge, vim.log.levels.INFO, { title = "VimWiki Git Status" })
       else
         vim.notify("git status failed: " .. (res.stderr or ""), vim.log.levels.ERROR, { title = "VimWiki Git" })
@@ -251,6 +274,10 @@ return {
       wiki_git_status()
     end, { desc = "Show VimWiki git status" })
 
+    vim.api.nvim_create_user_command("VimwikiGitUnlock", function()
+      wiki_git_unlock()
+    end, { desc = "Unlock encrypted VimWiki notes with git-crypt" })
+
     vim.api.nvim_create_user_command("VimwikiLazyGit", function()
       wiki_lazygit()
     end, { desc = "Open LazyGit in VimWiki notes directory" })
@@ -264,6 +291,24 @@ return {
       new_todo_item()
     end, { desc = "Insert a new todo checkbox item below current line" })
   end,
+  cmd = {
+    "VimwikiIndex",
+    "VimwikiTabIndex",
+    "VimwikiUISelect",
+    "VimwikiDiaryIndex",
+    "VimwikiMakeDiaryNote",
+    "VimwikiTabMakeDiaryNote",
+    "VimwikiMakeYesterdayDiaryNote",
+    "VimwikiMakeTomorrowDiaryNote",
+    "VimwikiDiaryGenerateLinks",
+    "VimwikiGitPush",
+    "VimwikiGitPull",
+    "VimwikiGitStatus",
+    "VimwikiGitUnlock",
+    "VimwikiLazyGit",
+    "VimwikiToggleTodo",
+    "VimwikiNewTodo",
+  },
   ft = { "vimwiki", "markdown" },
   keys = {
     { "<leader>ww",         "<cmd>VimwikiIndex<CR>",          desc = "[W]iki [W]iki index" },
@@ -280,6 +325,7 @@ return {
     { "<leader>wgp",        "<cmd>VimwikiGitPush<CR>",        desc = "[W]iki [G]it [P]ush" },
     { "<leader>wgP",        "<cmd>VimwikiGitPull<CR>",        desc = "[W]iki [G]it [P]ull" },
     { "<leader>wgs",        "<cmd>VimwikiGitStatus<CR>",      desc = "[W]iki [G]it [S]tatus" },
+    { "<leader>wgu",        "<cmd>VimwikiGitUnlock<CR>",      desc = "[W]iki [G]it [U]nlock vault" },
     { "<leader>wgl",        "<cmd>VimwikiLazyGit<CR>",        desc = "[W]iki [G]it [L]azyGit" },
   },
 }

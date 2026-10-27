@@ -271,6 +271,7 @@ Leader key: **`<Space>`**
 | `<leader>wgp` | Wiki Git Push (sync notes to GitHub repo) |
 | `<leader>wgP` | Wiki Git Pull (rebase latest notes from GitHub) |
 | `<leader>wgs` | Wiki Git Status (check status & E2E encryption) |
+| `<leader>wgu` | Wiki Git Unlock (decrypt vault with master key) |
 | `<leader>wgl` | Open LazyGit UI inside Wiki folder |
 
 ### 9. Database Management (`vim-dadbod`)

@@ -63,6 +63,21 @@ return {
         function() require("dapui").float_element("repl", { enter = true }) end,
         desc = "  [D]ap [R]EPL float",
       },
+      {
+        "<leader>dC",
+        function()
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            if vim.bo[buf].buftype == "terminal" or vim.bo[buf].filetype == "dapui_console" then
+              vim.api.nvim_set_current_win(win)
+              vim.cmd("startinsert")
+              return
+            end
+          end
+          require("dapui").float_element("console", { enter = true })
+        end,
+        desc = "  [D]ap [C]onsole focus/float",
+      },
     },
 
     config = function()
@@ -92,6 +107,16 @@ return {
 
       dap.listeners.after.event_initialized["dapui_config"] = function()
         dapui.open()
+        vim.defer_fn(function()
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            local buf = vim.api.nvim_win_get_buf(win)
+            if vim.bo[buf].buftype == "terminal" or vim.bo[buf].filetype == "dapui_console" then
+              vim.api.nvim_set_current_win(win)
+              vim.cmd("startinsert")
+              break
+            end
+          end
+        end, 150)
       end
       dap.listeners.before.event_terminated["dapui_config"] = function()
         dapui.close()

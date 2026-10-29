@@ -240,6 +240,38 @@ local function new_todo_item()
   vim.cmd("startinsert!")
 end
 
+-- Helper: Register custom user commands (push, pull, status, unlock, lazygit, todo toggling)
+-- Defined both in init (for early access) and in config (so they survive any lazy reload)
+local function register_custom_commands()
+  vim.api.nvim_create_user_command("VimwikiGitPush", function(opts)
+    wiki_git_push(opts.args)
+  end, { nargs = "?", desc = "Push VimWiki notes to GitHub" })
+
+  vim.api.nvim_create_user_command("VimwikiGitPull", function()
+    wiki_git_pull()
+  end, { desc = "Pull VimWiki notes from GitHub" })
+
+  vim.api.nvim_create_user_command("VimwikiGitStatus", function()
+    wiki_git_status()
+  end, { desc = "Show VimWiki git status" })
+
+  vim.api.nvim_create_user_command("VimwikiGitUnlock", function()
+    wiki_git_unlock()
+  end, { desc = "Unlock encrypted VimWiki notes with git-crypt" })
+
+  vim.api.nvim_create_user_command("VimwikiLazyGit", function()
+    wiki_lazygit()
+  end, { desc = "Open LazyGit in VimWiki notes directory" })
+
+  vim.api.nvim_create_user_command("VimwikiToggleTodo", function(opts)
+    toggle_todo_range(opts.line1, opts.line2)
+  end, { range = true, desc = "Toggle todo checkbox on line or visual range" })
+
+  vim.api.nvim_create_user_command("VimwikiNewTodo", function()
+    new_todo_item()
+  end, { desc = "Insert a new todo checkbox item below current line" })
+end
+
 return {
   "vimwiki/vimwiki",
   init = function()
@@ -261,37 +293,15 @@ return {
     -- opening any random README.md would try to activate wiki keymaps.
     vim.g.vimwiki_global = 0
 
-    -- Register user commands for wiki git management
-    vim.api.nvim_create_user_command("VimwikiGitPush", function(opts)
-      wiki_git_push(opts.args)
-    end, { nargs = "?", desc = "Push VimWiki notes to GitHub" })
-
-    vim.api.nvim_create_user_command("VimwikiGitPull", function()
-      wiki_git_pull()
-    end, { desc = "Pull VimWiki notes from GitHub" })
-
-    vim.api.nvim_create_user_command("VimwikiGitStatus", function()
-      wiki_git_status()
-    end, { desc = "Show VimWiki git status" })
-
-    vim.api.nvim_create_user_command("VimwikiGitUnlock", function()
-      wiki_git_unlock()
-    end, { desc = "Unlock encrypted VimWiki notes with git-crypt" })
-
-    vim.api.nvim_create_user_command("VimwikiLazyGit", function()
-      wiki_lazygit()
-    end, { desc = "Open LazyGit in VimWiki notes directory" })
-
-    -- Register user commands for smart todo management
-    vim.api.nvim_create_user_command("VimwikiToggleTodo", function(opts)
-      toggle_todo_range(opts.line1, opts.line2)
-    end, { range = true, desc = "Toggle todo checkbox on line or visual range" })
-
-    vim.api.nvim_create_user_command("VimwikiNewTodo", function()
-      new_todo_item()
-    end, { desc = "Insert a new todo checkbox item below current line" })
+    register_custom_commands()
+  end,
+  config = function()
+    register_custom_commands()
   end,
   cmd = {
+    -- Only list upstream VimWiki commands here.
+    -- Custom commands must NOT be listed here because lazy.nvim unregisters
+    -- all commands listed in `cmd` upon loading the plugin.
     "VimwikiIndex",
     "VimwikiTabIndex",
     "VimwikiUISelect",
@@ -301,13 +311,6 @@ return {
     "VimwikiMakeYesterdayDiaryNote",
     "VimwikiMakeTomorrowDiaryNote",
     "VimwikiDiaryGenerateLinks",
-    "VimwikiGitPush",
-    "VimwikiGitPull",
-    "VimwikiGitStatus",
-    "VimwikiGitUnlock",
-    "VimwikiLazyGit",
-    "VimwikiToggleTodo",
-    "VimwikiNewTodo",
   },
   ft = { "vimwiki", "markdown" },
   keys = {
@@ -318,7 +321,7 @@ return {
     { "<leader>w<leader>w", "<cmd>VimwikiMakeDiaryNote<CR>",  desc = "[W]iki new diary note" },
 
     -- Smart Checkbox / Todo management (Normal & Visual mode)
-    { "<leader>m",          ":VimwikiToggleTodo<CR>", mode = { "n", "v" }, desc = "Toggle todo [ ] ↔ [x] (line/visual)" },
+    { "<leader>m",          ":VimwikiToggleTodo<CR>", mode = { "n", "v" }, silent = true, desc = "Toggle todo [ ] ↔ [x] (line/visual)" },
     { "<leader>wn",         "<cmd>VimwikiNewTodo<CR>", desc = "[W]iki [N]ew todo item below" },
 
     -- Wiki Git repo management

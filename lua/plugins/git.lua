@@ -1,5 +1,5 @@
 -- =============================================================================
--- git.lua  ·  gitsigns.nvim + vim-fugitive + GitLens-style extras
+-- git.lua  ·  gitsigns.nvim + vim-fugitive + diffview.nvim (GitLens Pro)
 -- =============================================================================
 
 -- Shared helper: resolve the commit hash that last touched the CURRENT line
@@ -8,6 +8,9 @@
 local function get_commit_hash_at_line()
     local file = vim.fn.expand("%:p")
     local line = vim.fn.line(".")
+    if file == "" or vim.bo.buftype ~= "" then
+        return nil
+    end
     local result = vim.fn.systemlist(
         string.format("git blame -L %d,%d --porcelain -- %s", line, line, vim.fn.shellescape(file))
     )
@@ -31,9 +34,6 @@ return {
         event = { "BufReadPre", "BufNewFile" },
         config = function()
             -- Transparent smudge hook for git-crypt encrypted repositories:
-            -- By default, gitsigns queries raw git objects which returns encrypted ciphertext
-            -- (^@GITCRYPT^@...). We decrypt it through git-crypt smudge so gitsigns diffs against
-            -- the actual decrypted plaintext.
             local ok_repo, git_repo = pcall(require, "gitsigns.git.repo")
             if ok_repo and git_repo and git_repo.get_show_text then
                 local orig_get_show_text = git_repo.get_show_text
@@ -54,7 +54,6 @@ return {
             end
 
             require("gitsigns").setup({
-
                 signs = {
                     add          = { text = "+" },
                     change       = { text = "~" },
@@ -65,7 +64,7 @@ return {
                 },
 
                 signcolumn = true,
-                word_diff  = false, -- false: was hiding/wrapping diff text
+                word_diff  = false,
 
                 -- Inline blame at end of line: hash · author · date · message
                 current_line_blame = true,
@@ -75,7 +74,6 @@ return {
                     delay             = 300,
                     ignore_whitespace = true,
                 },
-                -- 8-char hash shown first
                 current_line_blame_formatter = "<abbrev_sha> · <author> · <author_time:%d %b %Y> · <summary>",
 
                 diff_opts = {
@@ -108,84 +106,22 @@ return {
                     map("n", "<leader>gb",  function() gs.blame_line({ full = true }) end, "[G]it [B]lame line")
                     map("n", "<leader>gib", gs.toggle_current_line_blame,            "[G]it [I]nline [B]lame toggle")
 
-                    -- Diff
+                    -- Quick diff vs index / last commit
                     map("n", "<leader>gd",  gs.diffthis,                             "[G]it [D]iff this")
                     map("n", "<leader>gdl", function() gs.diffthis("~") end,         "[G]it [D]iff [L]ast commit")
 
                     -- =================================================================
-                    -- 🌟 GitLens: Yank commit hash of current line
+                    -- 🌟 GitLens: Yank commit hash of current line to clipboard
                     -- =================================================================
                     map("n", "<leader>gyc", function()
                         local hash = get_commit_hash_at_line()
                         if not hash then
-                            vim.notify("No commit for this line (uncommitted)", vim.log.levels.WARN)
+                            vim.notify("No commit for this line (uncommitted or new line)", vim.log.levels.WARN)
                             return
                         end
                         vim.fn.setreg("+", hash)
                         vim.notify("󰆏  Copied commit " .. hash:sub(1, 8) .. " to clipboard", vim.log.levels.INFO)
-                    end, "[G]it [Y]ank [C]ommit hash")
-
-                    -- =================================================================
-                    -- 🌟 GitLens: Commit & File Inspector for current line
-                    -- Shows full commit message/metadata + every file touched in
-                    -- that commit. Press <CR> on a file line to view its diff.
-                    -- Press q to close.
-                    -- =================================================================
-                    map("n", "<leader>gci", function()
-                        local hash = get_commit_hash_at_line()
-                        if not hash then
-                            vim.notify("No commit for this line (uncommitted)", vim.log.levels.WARN)
-                            return
-                        end
-
-                        local meta = vim.fn.systemlist(string.format(
-                            "git show -s --format='commit %%H%%nAuthor: %%an <%%ae>%%nDate:   %%ad%%n%%n    %%s%%n%%n%%b' %s",
-                            hash
-                        ))
-                        local stat = vim.fn.systemlist(
-                            string.format("git show --stat --format='' %s", hash)
-                        )
-
-                        local lines = {}
-                        vim.list_extend(lines, meta)
-                        table.insert(lines, "")
-                        table.insert(lines, "── Files changed in this commit (<CR> to diff, q to close) ──")
-                        vim.list_extend(lines, stat)
-
-                        local buf = vim.api.nvim_create_buf(false, true)
-                        vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-                        vim.bo[buf].filetype   = "git"
-                        vim.bo[buf].bufhidden  = "wipe"
-                        vim.bo[buf].modifiable = false
-
-                        local width  = math.floor(vim.o.columns * 0.8)
-                        local height = math.floor(vim.o.lines * 0.8)
-                        local win = vim.api.nvim_open_win(buf, true, {
-                            relative  = "editor",
-                            width     = width,
-                            height    = height,
-                            row       = math.floor((vim.o.lines - height) / 2),
-                            col       = math.floor((vim.o.columns - width) / 2),
-                            border    = "rounded",
-                            title     = " Commit Inspector · " .. hash:sub(1, 8) .. " ",
-                            title_pos = "center",
-                        })
-
-                        vim.keymap.set("n", "<CR>", function()
-                            local cur = vim.api.nvim_get_current_line()
-                            local file = cur:match("^%s*(.-)%s+|")
-                            if not file or file == "" then return end
-                            vim.api.nvim_win_close(win, true)
-                            vim.cmd("tabnew")
-                            vim.cmd("Git show " .. hash .. " -- " .. vim.fn.fnameescape(file))
-                        end, { buffer = buf, silent = true, desc = "Open diff for file under cursor" })
-
-                        vim.keymap.set("n", "q", function()
-                            if vim.api.nvim_win_is_valid(win) then
-                                vim.api.nvim_win_close(win, true)
-                            end
-                        end, { buffer = buf, silent = true })
-                    end, "[G]it [C]ommit [I]nspector (GitLens)")
+                    end, "[G]it [Y]ank [C]ommit hash to clipboard")
                 end,
             })
         end,
@@ -197,13 +133,18 @@ return {
     -- =========================================================================
     {
         "tpope/vim-fugitive",
-        cmd  = { "Git", "G" },
-        keys = { "<leader>g" },
+        cmd  = { "Git", "G", "Gdiffsplit", "Gvdiffsplit", "Gedit" },
+        keys = {
+            { "<leader>gS", desc = "[G]it [S]tatus" },
+            { "<leader>gcm", desc = "[G]it [C]o[M]mit" },
+            { "<leader>gp", desc = "[G]it [P]ush" },
+            { "<leader>gP", desc = "[G]it [P]ull" },
+        },
         config = function()
             local map = vim.keymap.set
             local o   = function(desc) return { desc = desc, silent = true } end
 
-            -- Status & Diff
+            -- Status & Diff Split
             map("n", "<leader>gS",   ":Git<CR>",                o("[G]it [S]tatus"))
             map("n", "<leader>gds",  ":Gvdiffsplit<CR>",        o("[G]it [D]iff [S]plit"))
 
@@ -226,70 +167,8 @@ return {
                 vim.notify("Pushed: " .. msg, vim.log.levels.INFO)
             end, o("[G]it [A]dd [C]ommit [P]ush (auto)"))
 
-            -- Log
-            map("n", "<leader>glg",  ":Git log --oneline<CR>",               o("[G]it [L]o[G]"))
-            map("n", "<leader>ghl",  ":Git log --oneline --graph --all<CR>", o("[G]it [H]istory [L]og"))
-
-            -- GitLens feature: all commits that touched the current file
-            -- Opens location list, navigate ]q/[q, Enter to view diff
-            -- inside the fugitive config = function() ... end
-
-            -- Remember the file we are viewing history for
-            local current_file_for_log = nil
-
-            map("n", "<leader>glf", function()
-                local file = vim.fn.expand("%:p")
-                if file == "" then
-                    vim.notify("No file in buffer", vim.log.levels.WARN)
-                    return
-                end
-
-                current_file_for_log = file
-
-                local cmd = string.format(
-                    "Git log --pretty=format:'%%h  %%ad  %%an  %%s' --date=format:'%%Y-%%m-%%d %%H:%%M' -- %s",
-                    vim.fn.fnameescape(file)
-                )
-                vim.cmd(cmd)
-            end, o("[G]it [L]og of [F]ile(timeline)"))
-
-            vim.api.nvim_create_autocmd("FileType", {
-                pattern = "git",
-                callback = function()
-                    vim.keymap.set("n", "<CR>", function()
-                        local line = vim.api.nvim_get_current_line()
-                        local hash = line:match("^(%x+)")
-                        if not hash then
-                            vim.notify("No commit hash on this line", vim.log.levels.WARN)
-                            return
-                        end
-
-                        local file = current_file_for_log
-                        if not file or file == "" then
-                            vim.notify("Original file not found (open file first, then <leader>gfl)", vim.log.levels.WARN)
-                            return
-                        end
-
-                        -- Make path relative to git root (required by fugitive)
-                        local git_root = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-                        if not git_root or git_root == "" then
-                            vim.notify("Not inside a git repository", vim.log.levels.ERROR)
-                            return
-                        end
-
-                        local rel_file = file
-                        -- strip git root if the path is absolute
-                        if file:sub(1, #git_root) == git_root then
-                            rel_file = file:sub(#git_root + 2)   -- +2 to skip the /
-                        end
-
-                        -- Side-by-side: left = previous commit, right = this commit
-                        vim.cmd("tabnew")
-                        vim.cmd("Gedit " .. hash .. "^:" .. vim.fn.fnameescape(rel_file))
-                        vim.cmd("Gvdiffsplit " .. hash .. ":" .. vim.fn.fnameescape(rel_file))
-                    end, { buffer = true, silent = true, desc = "Side-by-side: commit vs previous (file only)" })
-                end,
-            })
+            -- Log (simple oneline terminal view)
+            map("n", "<leader>glg",  ":Git log --oneline<CR>",  o("[G]it [L]o[G] (oneline)"))
 
             -- Blame full file (8-char hash per line, Enter opens that commit)
             map("n", "<leader>gbl",  ":Git blame<CR>",          o("[G]it [B]lame [L]ine"))
@@ -319,19 +198,7 @@ return {
                 end
             end, o("[G]it [R]e[S]et to commit"))
 
-            -- =================================================================
-            -- 🌟 GitLens: Global commit hash inspection (prompt for any SHA)
-            -- =================================================================
-            map("n", "<leader>gch", function()
-                local hash = vim.fn.input("Inspect commit hash: ")
-                if hash ~= "" then
-                    vim.cmd("Git show " .. hash)
-                else
-                    vim.notify("Commit inspection cancelled", vim.log.levels.WARN)
-                end
-            end, o("[G]it [C]ommit [H]ash inspect (GitLens)"))
-
-            -- No wrap in git/fugitive buffers (was hiding text)
+            -- No wrap in git/fugitive buffers
             vim.api.nvim_create_autocmd("FileType", {
                 pattern  = { "fugitive", "git" },
                 callback = function()
@@ -341,48 +208,264 @@ return {
             })
         end,
     },
+
+    -- =========================================================================
+    -- PLUGIN 3: diffview.nvim (GitLens Pro for Neovim)
+    -- nvim-tree style left sidebar + VS Code 2-window side-by-side diff.
+    -- Single keypress (<leader>q or q) closes all 3 windows completely.
+    -- =========================================================================
+    {
+        "sindrets/diffview.nvim",
+        dependencies = { "nvim-lua/plenary.nvim", "nvim-tree/nvim-web-devicons" },
+        cmd = {
+            "DiffviewOpen",
+            "DiffviewClose",
+            "DiffviewToggleFiles",
+            "DiffviewFocusFiles",
+            "DiffviewFileHistory",
+            "DiffviewRefresh",
+        },
+        keys = {
+            -- 1. Working tree double-window diff (VS Code source control style)
+            { "<leader>gdo", "<cmd>DiffviewOpen<CR>", desc = "[G]it [D]iffview [O]pen (working tree diff)" },
+            { "<leader>gdc", "<cmd>DiffviewClose<CR>", desc = "[G]it [D]iffview [C]lose" },
+
+            -- 2. Single file commit history (left sidebar like nvim-tree + side-by-side diff)
+            {
+                "<leader>gfl",
+                function()
+                    local file = vim.fn.expand("%:p")
+                    if file == "" or vim.bo.buftype ~= "" then
+                        vim.notify("No file in current buffer", vim.log.levels.WARN)
+                        return
+                    end
+                    vim.cmd("DiffviewFileHistory %")
+                end,
+                desc = "[G]it [F]ile [L]og (single file history in left sidebar & side-by-side diff)",
+            },
+            {
+                "<leader>glf",
+                function()
+                    local file = vim.fn.expand("%:p")
+                    if file == "" or vim.bo.buftype ~= "" then
+                        vim.notify("No file in current buffer", vim.log.levels.WARN)
+                        return
+                    end
+                    vim.cmd("DiffviewFileHistory %")
+                end,
+                desc = "[G]it [L]og of [F]ile (alias for <leader>gfl)",
+            },
+
+            -- 3. Whole branch / repo commit history with graph, commit folds, and affected file stats
+            {
+                "<leader>ghl",
+                "<cmd>DiffviewFileHistory<CR>",
+                desc = "[G]it [H]istory [L]og (branch history with affected files list & diffs)",
+            },
+
+            -- 4. Commit Inspector: entered commit -> affected files tree -> select to view side-by-side diff
+            {
+                "<leader>gci",
+                function()
+                    local line_hash = get_commit_hash_at_line()
+                    local prompt_text = (line_hash and line_hash ~= "")
+                            and string.format("Inspect commit hash [%s]: ", line_hash:sub(1, 8))
+                        or "Inspect commit hash (default HEAD): "
+                    local hash = vim.fn.input(prompt_text)
+                    if hash == "" then
+                        hash = (line_hash and line_hash ~= "") and line_hash or "HEAD"
+                    end
+                    if hash == "" then
+                        vim.notify("No commit hash provided", vim.log.levels.WARN)
+                        return
+                    end
+                    vim.cmd(string.format("DiffviewOpen %s^!", hash))
+                end,
+                desc = "[G]it [C]ommit [I]nspect (enter hash -> affected files -> side-by-side diff)",
+            },
+            {
+                "<leader>gch",
+                function()
+                    local line_hash = get_commit_hash_at_line()
+                    local prompt_text = (line_hash and line_hash ~= "")
+                            and string.format("Inspect commit hash [%s]: ", line_hash:sub(1, 8))
+                        or "Inspect commit hash (default HEAD): "
+                    local hash = vim.fn.input(prompt_text)
+                    if hash == "" then
+                        hash = (line_hash and line_hash ~= "") and line_hash or "HEAD"
+                    end
+                    if hash == "" then
+                        vim.notify("No commit hash provided", vim.log.levels.WARN)
+                        return
+                    end
+                    vim.cmd(string.format("DiffviewOpen %s^!", hash))
+                end,
+                desc = "[G]it [C]ommit [H]ash inspect (alias for <leader>gci)",
+            },
+        },
+        config = function()
+            local actions = require("diffview.actions")
+
+            require("diffview").setup({
+                diff_opts = {
+                    mode = "stage",
+                },
+                enhanced_diff_hl = true,
+                use_icons = true,
+                icons = {
+                    folder_closed = "",
+                    folder_open = "",
+                },
+                signs = {
+                    fold_closed = "",
+                    fold_open = "",
+                    done = "✓",
+                },
+                view = {
+                    default = {
+                        layout = "diff2_horizontal", -- VS Code style 2-window horizontal side-by-side split
+                        winbar_info = true,
+                    },
+                    merge_tool = {
+                        layout = "diff3_horizontal",
+                        disable_diagnostics = true,
+                        winbar_info = true,
+                    },
+                    file_history = {
+                        layout = "diff2_horizontal", -- VS Code style 2-window horizontal side-by-side split
+                        winbar_info = true,
+                    },
+                },
+                file_panel = {
+                    listing_style = "tree",
+                    tree_options = {
+                        flatten_dirs = true,
+                        folder_statuses = "only_folded",
+                    },
+                    win_config = {
+                        position = "left", -- nvim-tree style left sidebar
+                        width = 40,
+                    },
+                },
+                file_history_panel = {
+                    log_options = {
+                        git = {
+                            single_file = {
+                                diff_merges = "first-parent",
+                                follow = true,
+                            },
+                            multi_file = {
+                                diff_merges = "first-parent",
+                            },
+                        },
+                    },
+                    win_config = {
+                        position = "left", -- nvim-tree style left sidebar
+                        width = 42,
+                    },
+                },
+                hooks = {
+                    diff_buf_read = function(bufnr)
+                        vim.keymap.set("n", "<leader>q", "<cmd>DiffviewClose<CR>", { buffer = bufnr, silent = true, desc = "Close entire Diffview" })
+                        vim.keymap.set("n", "q", "<cmd>DiffviewClose<CR>", { buffer = bufnr, silent = true, desc = "Close entire Diffview" })
+                    end,
+                },
+                keymaps = {
+                    disable_defaults = false,
+                    view = {
+                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<leader>q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<tab>", actions.select_next_entry, { desc = "Open next file diff" } },
+                        { "n", "<s-tab>", actions.select_prev_entry, { desc = "Open previous file diff" } },
+                        { "n", "gf", actions.goto_file_edit, { desc = "Jump to file in previous window" } },
+                    },
+                    file_panel = {
+                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<leader>q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "j", actions.next_entry, { desc = "Next file" } },
+                        { "n", "k", actions.prev_entry, { desc = "Previous file" } },
+                        { "n", "<cr>", actions.select_entry, { desc = "Open diff for file" } },
+                        { "n", "o", actions.select_entry, { desc = "Open diff for file" } },
+                        { "n", "R", actions.refresh_files, { desc = "Refresh files" } },
+                        { "n", "<tab>", actions.select_next_entry, { desc = "Next file diff" } },
+                        { "n", "<s-tab>", actions.select_prev_entry, { desc = "Previous file diff" } },
+                        { "n", "gf", actions.goto_file_edit, { desc = "Open file in editor" } },
+                    },
+                    file_history_panel = {
+                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<leader>q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "j", actions.next_entry, { desc = "Next commit / file" } },
+                        { "n", "k", actions.prev_entry, { desc = "Previous commit / file" } },
+                        { "n", "<cr>", actions.select_entry, { desc = "Open side-by-side diff / toggle commit files" } },
+                        { "n", "o", actions.select_entry, { desc = "Open side-by-side diff / toggle commit files" } },
+                        -- Fold / unfold affected files under each commit with diff stats (+/-)
+                        { "n", "<space>", actions.toggle_fold, { desc = "Toggle commit affected files list" } },
+                        { "n", "za", actions.toggle_fold, { desc = "Toggle commit affected files list" } },
+                        { "n", "zo", actions.open_fold, { desc = "Expand commit affected files" } },
+                        { "n", "zc", actions.close_fold, { desc = "Collapse commit affected files" } },
+                        { "n", "zR", actions.open_all_folds, { desc = "Expand all commits affected files" } },
+                        { "n", "zM", actions.close_all_folds, { desc = "Collapse all commits affected files" } },
+                        { "n", "y", actions.copy_hash, { desc = "Copy commit hash to clipboard" } },
+                        -- Open full commit in diffview tree
+                        { "n", "O", actions.open_in_diffview, { desc = "Open all affected files in full Diffview" } },
+                        { "n", "<C-d>", actions.open_in_diffview, { desc = "Open all affected files in full Diffview" } },
+                        { "n", "gf", actions.goto_file_edit, { desc = "Open file in editor" } },
+                        { "n", "g!", actions.options, { desc = "Open options panel" } },
+                    },
+                },
+            })
+        end,
+    },
 }
 
 -- =============================================================================
--- KEYBIND CHEATSHEET
+-- KEYBIND CHEATSHEET (GitLens Pro + Git Tools)
 -- =============================================================================
 --
--- gitsigns
--- ]h              [G]it Next [H]unk
--- [h              [G]it Prev [H]unk
--- <leader>hp      [H]unk [P]review
--- <leader>hs      [H]unk [S]tage            (normal + visual)
--- <leader>hu      [H]unk [U]ndo stage
--- <leader>hr      [H]unk [R]eset
--- <leader>hR      [H]unk [R]eset buffer
--- <leader>hS      [H]unk [S]tage buffer
--- <leader>gb      [G]it [B]lame line        (full popup: hash + author + body)
--- <leader>gib     [G]it [I]nline [B]lame    toggle on/off
--- <leader>gd      [G]it [D]iff this         vs index
--- <leader>gdl     [G]it [D]iff [L]ast       vs last commit (~)
--- <leader>gyc     [G]it [Y]ank [C]ommit     hash of current line → clipboard (GitLens)
--- <leader>gci     [G]it [C]ommit [I]nspector current line: message + metadata +
---                                           all files in that commit, <CR>=diff file, q=close (GitLens)
+-- GitLens Pro (diffview.nvim) — Left Sidebar (nvim-tree style) + 2-Window Split Diff:
+-- <leader>gfl / <leader>glf  Single file commit history
+--                            * Left sidebar shows commits list with author, date, message
+--                            * Main area shows VS Code 2-window side-by-side diff (old vs new)
+--                            * Sidebar stays open when selecting commits (<CR> / o)
+--                            * Press 'O' or '<C-d>' to show all affected files in that commit
+--                            * Press 'y' to copy commit hash
+--                            * Press 'q' or '<leader>q' to close ALL 3 windows in one shot!
 --
--- vim-fugitive
--- <leader>gS      [G]it [S]tatus            (- to stage, cc to commit, q to quit)
--- <leader>gds     [G]it [D]iff [S]plit
--- <leader>gaa     [G]it [A]dd [A]ll
--- <leader>gac     [G]it [A]dd [C]urrent
--- <leader>gcm     [G]it [C]o[M]mit
--- <leader>gp      [G]it [P]ush
--- <leader>gP      [G]it [P]ull
--- <leader>gacp    [G]it [A]dd [C]ommit [P]ush (auto, branch name as message)
--- <leader>glg     [G]it [L]o[G]             oneline
--- <leader>ghl     [G]it [H]istory [L]og     project graph (--all)
--- <leader>gfl     [G]it [F]ile [L]og        GitLens: all commits for this file
---                                           location list, Enter = view diff
--- <leader>gbl     [G]it [B]lame [L]ine      full file, Enter opens commit
--- <leader>gcb     [G]it [C]reate [B]ranch
--- <leader>gco     [G]it [C]heck[O]ut
--- <leader>gmb     [G]it [M]erge [B]ranch
--- <leader>gsf     [G]it [S]ync [F]ork
--- <leader>grc     [G]it [R]evert [C]ommit   (prompt)
--- <leader>grs     [G]it [R]e[S]et           (prompt hash + soft/mixed/hard)
--- <leader>gch     [G]it [C]ommit [H]ash inspect (prompt any SHA, GitLens)
+-- <leader>ghl                Branch / project commit history
+--                            * Left sidebar shows commits list
+--                            * Press <Space> or za on any commit to expand affected files with stats (+adds, -dels)
+--                            * Select any file with <CR> to show its side-by-side diff
+--                            * Press 'q' or '<leader>q' to close ALL 3 windows in one shot!
+--
+-- <leader>gci / <leader>gch  Commit Inspector
+--                            * Prompt SHA (defaults to current line commit), opens all affected files
+--                            * Selecting any file opens side-by-side diff
+--
+-- <leader>gdo                Working tree side-by-side diff (all uncommitted changes)
+-- <leader>gdc                Close Diffview (also 'q' or '<leader>q' inside Diffview)
+--
+-- gitsigns.nvim:
+-- ]h / [h                    Next / Prev hunk
+-- <leader>hp                 Hunk preview popup
+-- <leader>hs / <leader>hr    Hunk stage / reset
+-- <leader>hS / <leader>hR    Buffer stage / reset
+-- <leader>hu                 Undo hunk stage
+-- <leader>gb                 Blame line popup (details)
+-- <leader>gib                Toggle inline blame on/off
+-- <leader>gd / <leader>gdl   Quick diff vs index / last commit
+-- <leader>gyc                Yank commit hash of current line to clipboard
+--
+-- vim-fugitive & lazygit:
+-- <leader>lg                 Open LazyGit floating UI (pressing 'o' or 'e' opens file in this nvim instance!)
+-- <leader>gS                 Git status summary
+-- <leader>gds                Fugitive diff split
+-- <leader>gaa / <leader>gac  Git add all / Git add current
+-- <leader>gcm                Git commit
+-- <leader>gp / <leader>gP    Git push / Git pull
+-- <leader>gacp               Git auto add + commit + push
+-- <leader>gbl                Git blame full buffer
+-- <leader>gcb / <leader>gco  Git checkout -b / Git checkout
+-- <leader>gmb                Git merge branch
+-- <leader>gsf                Sync upstream main fork
+-- <leader>grc / <leader>grs  Revert commit / Reset to commit
 -- =============================================================================

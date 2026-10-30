@@ -1,7 +1,7 @@
 -- Ensure ~/.local/bin is in Neovim's PATH (for git-crypt, custom binaries, etc.)
 local local_bin = vim.fn.expand("~/.local/bin")
-if not vim.env.PATH:find(local_bin, 1, true) then
-    vim.env.PATH = local_bin .. ":" .. vim.env.PATH
+if not (vim.env.PATH and vim.env.PATH:find(local_bin, 1, true)) then
+    vim.env.PATH = local_bin .. ":" .. (vim.env.PATH or "")
 end
 
 local lazypath = vim.fn.stdpath("data").. "/lazy/lazy.nvim"

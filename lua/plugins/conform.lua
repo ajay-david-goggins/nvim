@@ -6,6 +6,9 @@ return {
   event = "BufWritePre",
   cmd = "ConformInfo",
   opts = {
+    default_format_opts = {
+      lsp_format = "fallback",
+    },
     formatters_by_ft = {
       lua = { "stylua" },
       python = { "ruff_organize_imports", "ruff_format" },

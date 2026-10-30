@@ -188,7 +188,7 @@ Leader key: **`<Space>`**
 | `<leader>cI` | `n` | Find implementations |
 | `<leader>cR` | `n` | Rename symbol |
 | `<leader>ca` | `n`, `v` | Code actions |
-| `<leader>cf` | `n` | Format buffer via Conform / LSP |
+| `<leader>cf` | `n`, `v` | Format buffer / selection via Conform / LSP |
 | `<leader>fwc` | `n` | Format whole file (Prettier / LSP) |
 | `<leader>fsc` | `v` | Format visual selection only |
 | `<leader>cH` | `n` | Toggle Inlay Hints |

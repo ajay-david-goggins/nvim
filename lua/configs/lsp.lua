@@ -180,7 +180,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end, "󰈉  [D]iagnostic [G]lobal toggle")
 
     -- Format (conform.nvim owns formatting now — see plugins/conform.lua)
-    map("n", "<leader>cf", function() require("conform").format({ async = true, bufnr = buf }) end, "󰉿  Format Buffer")
+    map({ "n", "v" }, "<leader>cf", function() require("conform").format({ async = true, bufnr = buf, lsp_format = "fallback" }) end, "󰉿  Format Buffer / Selection")
 
     -- Inlay hints
     map("n", "<leader>cH", function()

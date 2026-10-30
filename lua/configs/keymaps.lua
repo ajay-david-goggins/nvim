@@ -62,23 +62,39 @@ vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
     end,
 })
 
--- Manual Formatting Keymap
+-- Manual Formatting Keymap: Whole File
 vim.keymap.set("n", "<leader>fwc", function()
-    vim.lsp.buf.format({ async = true })
-    print("Prettier: Whole File Code Formatted! ✨")
+    local ok, conform = pcall(require, "conform")
+    if ok then
+        conform.format({ async = true, lsp_format = "fallback" }, function(err)
+            if not err then
+                vim.notify("Prettier: Whole File Code Formatted! ✨", vim.log.levels.INFO)
+            end
+        end)
+    else
+        vim.lsp.buf.format({ async = true })
+        vim.notify("Prettier: Whole File Code Formatted! ✨", vim.log.levels.INFO)
+    end
 end, { desc = "[F]ormat [W]hole [C]ode with Prettier/LSP" })
 
 -- Format ONLY the selection (Visual Mode)
 vim.keymap.set("v", "<leader>fsc", function()
-    vim.lsp.buf.format({
-        async = true,
-        range = {
-            ["start"] = vim.api.nvim_buf_get_mark(0, "<"),
-            ["end"] = vim.api.nvim_buf_get_mark(0, ">"),
-        }
-    })
-    print("Prettier: Formatted selected code! 🎯")
-end, { desc = "[F]ormat [S]eleced [C]ode only" })
+    local ok, conform = pcall(require, "conform")
+    if ok then
+        conform.format({ async = true, lsp_format = "fallback" }, function(err)
+            if not err then
+                vim.notify("Prettier: Formatted selected code! 🎯", vim.log.levels.INFO)
+                local mode = vim.api.nvim_get_mode().mode
+                if vim.startswith(string.lower(mode), "v") then
+                    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
+                end
+            end
+        end)
+    else
+        vim.lsp.buf.format({ async = true })
+        vim.notify("Prettier: Formatted selected code! 🎯", vim.log.levels.INFO)
+    end
+end, { desc = "[F]ormat [S]elected [C]ode only" })
 
 -- Standard LSP navigation fallbacks (gd, <C-]>, K)
 K("n", "gd", function()

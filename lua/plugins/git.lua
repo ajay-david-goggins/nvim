@@ -211,8 +211,8 @@ return {
 
     -- =========================================================================
     -- PLUGIN 3: diffview.nvim (GitLens Pro for Neovim)
-    -- VS Code-style side-by-side double window diff, file commit history, and
-    -- commit inspector with affected files tree.
+    -- nvim-tree style left sidebar + VS Code 2-window side-by-side diff.
+    -- Single keypress (<leader>q or q) closes all 3 windows completely.
     -- =========================================================================
     {
         "sindrets/diffview.nvim",
@@ -227,10 +227,10 @@ return {
         },
         keys = {
             -- 1. Working tree double-window diff (VS Code source control style)
-            { "<leader>gdo", "<cmd>DiffviewOpen<CR>", desc = "[G]it [D]iffview [O]pen (side-by-side working diff)" },
+            { "<leader>gdo", "<cmd>DiffviewOpen<CR>", desc = "[G]it [D]iffview [O]pen (working tree diff)" },
             { "<leader>gdc", "<cmd>DiffviewClose<CR>", desc = "[G]it [D]iffview [C]lose" },
 
-            -- 2. Single file commit history (GitLens file timeline & side-by-side diff)
+            -- 2. Single file commit history (left sidebar like nvim-tree + side-by-side diff)
             {
                 "<leader>gfl",
                 function()
@@ -241,7 +241,7 @@ return {
                     end
                     vim.cmd("DiffviewFileHistory %")
                 end,
-                desc = "[G]it [F]ile [L]og (single file commits list & side-by-side diff)",
+                desc = "[G]it [F]ile [L]og (single file history in left sidebar & side-by-side diff)",
             },
             {
                 "<leader>glf",
@@ -256,11 +256,11 @@ return {
                 desc = "[G]it [L]og of [F]ile (alias for <leader>gfl)",
             },
 
-            -- 3. Whole branch / repo commit history with graph & side-by-side diff
+            -- 3. Whole branch / repo commit history with graph, commit folds, and affected file stats
             {
                 "<leader>ghl",
                 "<cmd>DiffviewFileHistory<CR>",
-                desc = "[G]it [H]istory [L]og (full repo commit history & graph)",
+                desc = "[G]it [H]istory [L]og (branch history with affected files list & diffs)",
             },
 
             -- 4. Commit Inspector: entered commit -> affected files tree -> select to view side-by-side diff
@@ -279,7 +279,6 @@ return {
                         vim.notify("No commit hash provided", vim.log.levels.WARN)
                         return
                     end
-                    -- DiffviewOpen <hash>^! shows all files touched in that single commit
                     vim.cmd(string.format("DiffviewOpen %s^!", hash))
                 end,
                 desc = "[G]it [C]ommit [I]nspect (enter hash -> affected files -> side-by-side diff)",
@@ -304,9 +303,10 @@ return {
                 desc = "[G]it [C]ommit [H]ash inspect (alias for <leader>gci)",
             },
         },
-        opts = function()
+        config = function()
             local actions = require("diffview.actions")
-            return {
+
+            require("diffview").setup({
                 diff_opts = {
                     mode = "stage",
                 },
@@ -343,15 +343,16 @@ return {
                         folder_statuses = "only_folded",
                     },
                     win_config = {
-                        position = "left",
-                        width = 35,
+                        position = "left", -- nvim-tree style left sidebar
+                        width = 40,
                     },
                 },
                 file_history_panel = {
                     log_options = {
                         git = {
                             single_file = {
-                                diff_merges = "combined",
+                                diff_merges = "first-parent",
+                                follow = true,
                             },
                             multi_file = {
                                 diff_merges = "first-parent",
@@ -359,19 +360,28 @@ return {
                         },
                     },
                     win_config = {
-                        position = "left",
-                        width = 38,
+                        position = "left", -- nvim-tree style left sidebar
+                        width = 42,
                     },
+                },
+                hooks = {
+                    diff_buf_read = function(bufnr)
+                        vim.keymap.set("n", "<leader>q", "<cmd>DiffviewClose<CR>", { buffer = bufnr, silent = true, desc = "Close entire Diffview" })
+                        vim.keymap.set("n", "q", "<cmd>DiffviewClose<CR>", { buffer = bufnr, silent = true, desc = "Close entire Diffview" })
+                    end,
                 },
                 keymaps = {
                     disable_defaults = false,
                     view = {
-                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview" } },
+                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<leader>q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
                         { "n", "<tab>", actions.select_next_entry, { desc = "Open next file diff" } },
                         { "n", "<s-tab>", actions.select_prev_entry, { desc = "Open previous file diff" } },
+                        { "n", "gf", actions.goto_file_edit, { desc = "Jump to file in previous window" } },
                     },
                     file_panel = {
-                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview" } },
+                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<leader>q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
                         { "n", "j", actions.next_entry, { desc = "Next file" } },
                         { "n", "k", actions.prev_entry, { desc = "Previous file" } },
                         { "n", "<cr>", actions.select_entry, { desc = "Open diff for file" } },
@@ -379,21 +389,31 @@ return {
                         { "n", "R", actions.refresh_files, { desc = "Refresh files" } },
                         { "n", "<tab>", actions.select_next_entry, { desc = "Next file diff" } },
                         { "n", "<s-tab>", actions.select_prev_entry, { desc = "Previous file diff" } },
+                        { "n", "gf", actions.goto_file_edit, { desc = "Open file in editor" } },
                     },
                     file_history_panel = {
-                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview" } },
-                        { "n", "j", actions.next_entry, { desc = "Next commit" } },
-                        { "n", "k", actions.prev_entry, { desc = "Previous commit" } },
-                        { "n", "<cr>", actions.select_entry, { desc = "Open side-by-side diff for this commit" } },
-                        { "n", "o", actions.select_entry, { desc = "Open side-by-side diff for this commit" } },
+                        { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "<leader>q", "<cmd>DiffviewClose<cr>", { desc = "Close Diffview (all 3 windows in 1 shot)" } },
+                        { "n", "j", actions.next_entry, { desc = "Next commit / file" } },
+                        { "n", "k", actions.prev_entry, { desc = "Previous commit / file" } },
+                        { "n", "<cr>", actions.select_entry, { desc = "Open side-by-side diff / toggle commit files" } },
+                        { "n", "o", actions.select_entry, { desc = "Open side-by-side diff / toggle commit files" } },
+                        -- Fold / unfold affected files under each commit with diff stats (+/-)
+                        { "n", "<space>", actions.toggle_fold, { desc = "Toggle commit affected files list" } },
+                        { "n", "za", actions.toggle_fold, { desc = "Toggle commit affected files list" } },
+                        { "n", "zo", actions.open_fold, { desc = "Expand commit affected files" } },
+                        { "n", "zc", actions.close_fold, { desc = "Collapse commit affected files" } },
+                        { "n", "zR", actions.open_all_folds, { desc = "Expand all commits affected files" } },
+                        { "n", "zM", actions.close_all_folds, { desc = "Collapse all commits affected files" } },
                         { "n", "y", actions.copy_hash, { desc = "Copy commit hash to clipboard" } },
-                        -- Option to switch and show all affected files in that commit:
-                        { "n", "O", actions.open_in_diffview, { desc = "Switch to show all affected files in this commit" } },
-                        { "n", "<C-d>", actions.open_in_diffview, { desc = "Switch to show all affected files in this commit" } },
+                        -- Open full commit in diffview tree
+                        { "n", "O", actions.open_in_diffview, { desc = "Open all affected files in full Diffview" } },
+                        { "n", "<C-d>", actions.open_in_diffview, { desc = "Open all affected files in full Diffview" } },
+                        { "n", "gf", actions.goto_file_edit, { desc = "Open file in editor" } },
                         { "n", "g!", actions.options, { desc = "Open options panel" } },
                     },
                 },
-            }
+            })
         end,
     },
 }
@@ -402,17 +422,27 @@ return {
 -- KEYBIND CHEATSHEET (GitLens Pro + Git Tools)
 -- =============================================================================
 --
--- GitLens Pro (diffview.nvim) — VS Code 2-Window Side-by-Side Diff:
--- <leader>gfl / <leader>glf  Single file commit history (sidebar commits list + side-by-side diff)
---                            * Inside sidebar: <CR>/o = view diff
---                            * Inside sidebar: O / <C-d> = switch to show all affected files in that commit!
---                            * Inside sidebar: y = copy commit hash
---                            * Inside sidebar: q = close
--- <leader>gci / <leader>gch  Commit Inspector (prompt SHA, shows all affected files in sidebar,
---                            selecting file shows VS Code side-by-side diff)
--- <leader>gdo                Open working tree side-by-side diff (all uncommitted changes)
--- <leader>gdc                Close Diffview
--- <leader>ghl                Project-wide history & commit graph
+-- GitLens Pro (diffview.nvim) — Left Sidebar (nvim-tree style) + 2-Window Split Diff:
+-- <leader>gfl / <leader>glf  Single file commit history
+--                            * Left sidebar shows commits list with author, date, message
+--                            * Main area shows VS Code 2-window side-by-side diff (old vs new)
+--                            * Sidebar stays open when selecting commits (<CR> / o)
+--                            * Press 'O' or '<C-d>' to show all affected files in that commit
+--                            * Press 'y' to copy commit hash
+--                            * Press 'q' or '<leader>q' to close ALL 3 windows in one shot!
+--
+-- <leader>ghl                Branch / project commit history
+--                            * Left sidebar shows commits list
+--                            * Press <Space> or za on any commit to expand affected files with stats (+adds, -dels)
+--                            * Select any file with <CR> to show its side-by-side diff
+--                            * Press 'q' or '<leader>q' to close ALL 3 windows in one shot!
+--
+-- <leader>gci / <leader>gch  Commit Inspector
+--                            * Prompt SHA (defaults to current line commit), opens all affected files
+--                            * Selecting any file opens side-by-side diff
+--
+-- <leader>gdo                Working tree side-by-side diff (all uncommitted changes)
+-- <leader>gdc                Close Diffview (also 'q' or '<leader>q' inside Diffview)
 --
 -- gitsigns.nvim:
 -- ]h / [h                    Next / Prev hunk

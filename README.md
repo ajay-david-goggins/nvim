@@ -315,6 +315,8 @@ Leader key: **`<Space>`**
 | `<M-e>` | Fast Wrap text under cursor with brackets/quotes (`nvim-autopairs`) |
 | `]t` / `[t` | Jump to next / previous `TODO`/`FIXME` comment (`todo-comments`) |
 | `<leader>tc` | Toggle sticky context line (`treesitter-context`) |
+| `<leader>tb` | Toggle transparent background (`transparent.nvim`) |
+| `<leader>tr` | Toggle transparency (alias for `<leader>tb`) |
 | `[c` | Jump up to sticky context function/class |
 | `n` / `N` | Next / previous search match with floating counter (`hlslens`) |
 | `*` / `#` | Forward / backward search word under cursor with match counter |

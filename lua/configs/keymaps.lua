@@ -43,6 +43,25 @@ K("n", "<A-H>", ":vertical resize -2<CR>", { desc = "Make window right" })
 
 K("n", "<leader>tt", ":belowright split | resize 10 | terminal<CR>", { desc = "[T]iny [T]erminal", silent = true })
 
+-- Toggle background transparency (Transparent UI <-> Solid Dracula)
+K("n", "<leader>tb", function()
+    local ok, transparent = pcall(require, "transparent")
+    if ok then
+        transparent.toggle()
+        if vim.g.transparent_enabled then
+            vim.notify("✨ Background: Transparent (Wallpaper visible)", vim.log.levels.INFO, { title = "Neovim Transparency" })
+        else
+            vim.notify("🎨 Background: Solid (Dracula default)", vim.log.levels.INFO, { title = "Neovim Transparency" })
+        end
+    else
+        vim.notify("transparent.nvim not loaded", vim.log.levels.WARN)
+    end
+end, { desc = "[T]oggle [B]ackground transparency" })
+
+-- Convenience alias: <leader>tr for Toggle Transparency
+K("n", "<leader>tr", "<leader>tb", { remap = true, desc = "[T]oggle T[r]ansparency" })
+
+
 -- wrap text
 K("n", "<A-z>", function()
     vim.wo.wrap = not vim.wo.wrap

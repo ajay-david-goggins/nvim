@@ -31,6 +31,8 @@ return {
             { "<leader>p?", desc = "  [P]ostman show active variables" },
             { "<leader>s", group = "[S]earch (project root)" },
             { "<leader>t", group = "[T]oggle" },
+            { "<leader>tb", desc = "  [T]oggle [B]ackground (Transparent / Solid)" },
+            { "<leader>tr", desc = "  [T]oggle T[r]ansparency" },
             { "<leader>w", group = "[W]indow / [W]iki" },
             { "<leader>wg", group = "[W]iki [G]it" },
             -- { "<leader>J", group = "[J]ava" },

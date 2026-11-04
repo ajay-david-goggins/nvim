@@ -39,10 +39,11 @@ vim.opt.hlsearch = true
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
 
--- Treesitter-based folding (set up in plugins/treesitter.lua), start unfolded
+-- Treesitter-based folding (method-level folding configured in plugins/treesitter.lua)
 vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 vim.opt.foldlevelstart = 99
-vim.opt.foldenable = false
+vim.opt.foldenable = true
 
 -- Diff options: ignore carriage returns (^M / CRLF) at end of line and whitespace
 vim.opt.diffopt:append({ "iwhiteeol", "linematch:60" })

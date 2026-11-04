@@ -71,6 +71,26 @@ K("n", "<A-Z>", function()
     vim.opt.wrap = not vim.opt.wrap:get()
 end, { desc = "Toggle word wrap for every file", silent = true }) -- every file
 
+-- Code Folding Keymaps:
+-- In expr/treesitter mode, zf normally errors with E350.
+-- Normal mode: zf toggles the fold under cursor (like za) without error.
+-- Visual mode: zf creates a manual fold for the selection without error.
+K("n", "zf", function()
+    if vim.fn.foldlevel(".") > 0 then
+        vim.cmd("normal! za")
+    else
+        local ok = pcall(vim.cmd, "normal! zc")
+        if not ok then
+            vim.notify("No fold under cursor (select lines in visual mode and press zf to fold)", vim.log.levels.INFO)
+        end
+    end
+end, { desc = "Toggle fold under cursor (no E350)" })
+
+K("v", "zf", function()
+    vim.opt_local.foldmethod = "manual"
+    vim.cmd("normal! zf")
+end, { desc = "Create manual fold for visual selection" })
+
 
 K("n", "<leader>a", "ggVG", { desc = "Select [A]ll (whole buffer)" }) -- desc was mislabeled ("Make window narrower")
 

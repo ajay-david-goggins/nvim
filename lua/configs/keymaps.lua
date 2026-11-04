@@ -10,6 +10,9 @@ K("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
 K("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus to the lower window" })
 K("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper window" })
 
+K("n", "<leader>zi", "<C-w>-<C-w>|", { desc = "[Z]oom [i]n current buffer" })
+K("n", "<leader>zo", "<C-w>=", { desc = "[Z]oom [O]ut current buffer" })
+
 K("n", "<leader>wv", "<CMD>vsplit<CR>", { desc = "[W]indow Split [V]ertically" })
 K("n", "<leader>wh", "<CMD>split<CR>", { desc = "[W]indow Split [H]orizontally" })
 

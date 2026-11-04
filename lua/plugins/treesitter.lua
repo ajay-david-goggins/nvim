@@ -81,7 +81,16 @@ return {
 ]],
 			c = "(function_definition) @fold",
 			cpp = "(function_definition) @fold",
-			lua = "(function_declaration) @fold",
+			lua = [[
+(function_declaration) @fold
+(function_definition) @fold
+(table_constructor) @fold
+]],
+			html = [[
+(element) @fold
+(script_element) @fold
+(style_element) @fold
+]],
 		}
 
 		for lang, q in pairs(custom_folds) do
@@ -100,6 +109,7 @@ return {
 			c = true,
 			cpp = true,
 			lua = true,
+			html = true,
 		}
 
 		vim.api.nvim_create_autocmd("FileType", {
@@ -115,7 +125,7 @@ return {
 				if code_filetypes[ft] then
 					vim.wo.foldmethod = "expr"
 					vim.wo.foldenable = true
-					vim.wo.foldlevel = 0
+					vim.wo.foldlevel = ft == "html" and 1 or 0
 				end
 			end,
 		})

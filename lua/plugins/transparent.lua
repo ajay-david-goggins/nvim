@@ -32,7 +32,9 @@ return {
                 "Folded",
                 "SignColumnSB",
             },
-            exclude_groups = {},
+            exclude_groups = {
+                "CursorLine",
+            },
         })
 
         -- Clear dynamic highlight groups by prefix

@@ -1,16 +1,27 @@
 return {
     "nvim-tree/nvim-tree.lua",
     config = function()
-        -- Keymap to toggle the explorer
-        vim.keymap.set("n", "<leader>e", "<CMD>NvimTreeToggle<CR>", { desc = "Toggle [E]xplorer" })
+        -- Keymap to toggle the explorer and find/focus current file
+        vim.keymap.set("n", "<leader>e", function()
+            require("nvim-tree.api").tree.toggle({ find_file = true, focus = true, update_root = true })
+        end, { desc = "Toggle [E]xplorer (find current file)" })
 
         require("nvim-tree").setup({
-            -- 1. THIS SECTIONS FIXES THE SYNCING ISSUE
+            -- Auto-sync tree to current file on any buffer switch / jump to definition
             update_focused_file = {
                 enable = true,
-                update_root = true, -- Set to true if you want the root to change to the file's directory
-                ignore_list = {},
+                update_root = {
+                    enable = true,
+                    ignore_list = {},
+                },
+                exclude = false,
             },
+            -- Ensure no files or packages (node_modules, .venv, dotfiles, etc.) are hidden from tree sync
+            filters = {
+                dotfiles = false,
+                git_ignored = false,
+            },
+            sync_root_with_cwd = true,
             view = {
                 width = 50,
                 side = "left",

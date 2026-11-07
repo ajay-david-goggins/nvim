@@ -6,7 +6,7 @@ return {
         local transparent = require("transparent")
         local cache_file = vim.fn.stdpath("data") .. "/transparent_cache"
         if vim.fn.filereadable(cache_file) == 0 then
-            vim.g.transparent_enabled = true
+            vim.g.transparent_enabled = false
         end
 
         transparent.setup({

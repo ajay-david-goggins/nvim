@@ -179,8 +179,8 @@ vim.api.nvim_create_autocmd("LspAttach", {
       vim.diagnostic.enable(not vim.diagnostic.is_enabled())
     end, "󰈉  [D]iagnostic [G]lobal toggle")
 
-    -- Format (conform.nvim owns formatting now — see plugins/conform.lua)
-    map({ "n", "v" }, "<leader>cf", function() require("conform").format({ async = true, bufnr = buf, lsp_format = "fallback" }) end, "󰉿  Format Buffer / Selection")
+    -- Format (<leader>cf and <leader>fsc are handled globally in configs/keymaps.lua
+    -- with full selection range detection and conform/LSP fallback)
 
     -- Inlay hints
     map("n", "<leader>cH", function()

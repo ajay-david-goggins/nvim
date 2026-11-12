@@ -104,39 +104,115 @@ vim.api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
     end,
 })
 
--- Manual Formatting Keymap: Whole File
-vim.keymap.set("n", "<leader>fwc", function()
+-- =============================================================================
+-- Formatting Helpers (Conform / LSP with accurate range detection)
+-- =============================================================================
+local function get_visual_selection_range()
+    local mode = vim.fn.mode()
+    local is_visual = (mode == "v" or mode == "V" or mode == "\22")
+    local start_row, start_col, end_row, end_col
+
+    if is_visual then
+        local vpos = vim.fn.getpos("v")
+        local dotpos = vim.fn.getpos(".")
+        start_row = vpos[2]
+        start_col = vpos[3]
+        end_row = dotpos[2]
+        end_col = dotpos[3]
+
+        if start_row > end_row or (start_row == end_row and start_col > end_col) then
+            start_row, end_row = end_row, start_row
+            start_col, end_col = end_col, start_col
+        end
+
+        if mode == "V" then
+            start_col = 0
+            local end_line = vim.api.nvim_buf_get_lines(0, end_row - 1, end_row, true)[1] or ""
+            end_col = #end_line
+        elseif mode == "v" then
+            start_col = math.max(0, start_col - 1)
+            local end_line = vim.api.nvim_buf_get_lines(0, end_row - 1, end_row, true)[1] or ""
+            end_col = math.min(#end_line, end_col)
+        else
+            -- Block mode (<C-v>)
+            start_col = 0
+            local end_line = vim.api.nvim_buf_get_lines(0, end_row - 1, end_row, true)[1] or ""
+            end_col = #end_line
+        end
+    else
+        local start_mark = vim.api.nvim_buf_get_mark(0, "<")
+        local end_mark = vim.api.nvim_buf_get_mark(0, ">")
+        if start_mark[1] == 0 or end_mark[1] == 0 then
+            return nil
+        end
+        start_row = math.min(start_mark[1], end_mark[1])
+        end_row = math.max(start_mark[1], end_mark[1])
+        start_col = 0
+        local end_line = vim.api.nvim_buf_get_lines(0, end_row - 1, end_row, true)[1] or ""
+        end_col = #end_line
+    end
+
+    return {
+        start = { start_row, start_col },
+        ["end"] = { end_row, end_col },
+    }
+end
+
+local function format_whole_file()
     local ok, conform = pcall(require, "conform")
     if ok then
-        conform.format({ async = true, lsp_format = "fallback" }, function(err)
-            if not err then
-                vim.notify("Prettier: Whole File Code Formatted! ✨", vim.log.levels.INFO)
+        conform.format({ async = false, timeout_ms = 2000, lsp_format = "fallback" }, function(err)
+            if err then
+                vim.notify("Format error: " .. tostring(err), vim.log.levels.WARN)
+            else
+                vim.notify("Code Formatted! ✨", vim.log.levels.INFO)
             end
         end)
     else
-        vim.lsp.buf.format({ async = true })
-        vim.notify("Prettier: Whole File Code Formatted! ✨", vim.log.levels.INFO)
+        vim.lsp.buf.format({ async = false })
+        vim.notify("Code Formatted! ✨", vim.log.levels.INFO)
     end
-end, { desc = "[F]ormat [W]hole [C]ode with Prettier/LSP" })
+end
+
+local function format_selected_code()
+    local range = get_visual_selection_range()
+    -- Exit visual mode back to normal mode immediately to avoid race conditions
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+
+    if not range then
+        vim.notify("No visual selection to format.", vim.log.levels.WARN)
+        return
+    end
+
+    local start_row = range.start[1]
+    local end_row = range["end"][1]
+
+    local ok, conform = pcall(require, "conform")
+    if ok then
+        conform.format({ bufnr = 0, range = range, async = false, timeout_ms = 2000, lsp_format = "fallback" }, function(err)
+            if err then
+                vim.notify("Format selection error: " .. tostring(err), vim.log.levels.WARN)
+            else
+                vim.notify(string.format("Formatted selected code (lines %d-%d)! 🎯", start_row, end_row), vim.log.levels.INFO)
+            end
+        end)
+    else
+        vim.lsp.buf.format({
+            bufnr = 0,
+            range = range,
+            async = false,
+        })
+        vim.notify(string.format("Formatted selected code (lines %d-%d)! 🎯", start_row, end_row), vim.log.levels.INFO)
+    end
+end
+
+-- Manual Formatting Keymap: Whole File
+vim.keymap.set("n", "<leader>fwc", format_whole_file, { desc = "[F]ormat [W]hole [C]ode with Prettier/LSP" })
+vim.keymap.set("n", "<leader>cf", format_whole_file, { desc = "󰉿  [C]ode [F]ormat Buffer" })
 
 -- Format ONLY the selection (Visual Mode)
-vim.keymap.set("v", "<leader>fsc", function()
-    local ok, conform = pcall(require, "conform")
-    if ok then
-        conform.format({ async = true, lsp_format = "fallback" }, function(err)
-            if not err then
-                vim.notify("Prettier: Formatted selected code! 🎯", vim.log.levels.INFO)
-                local mode = vim.api.nvim_get_mode().mode
-                if vim.startswith(string.lower(mode), "v") then
-                    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", true)
-                end
-            end
-        end)
-    else
-        vim.lsp.buf.format({ async = true })
-        vim.notify("Prettier: Formatted selected code! 🎯", vim.log.levels.INFO)
-    end
-end, { desc = "[F]ormat [S]elected [C]ode only" })
+vim.keymap.set("v", "<leader>fsc", format_selected_code, { desc = "[F]ormat [S]elected [C]ode only" })
+vim.keymap.set("v", "<leader>cf", format_selected_code, { desc = "󰉿  [C]ode [F]ormat Selection" })
 
 -- Standard LSP navigation fallbacks (gd, <C-]>, K)
 K("n", "gd", function()

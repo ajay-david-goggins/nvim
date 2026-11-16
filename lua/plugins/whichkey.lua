@@ -18,6 +18,7 @@ return {
             { "<leader>e", group = "[E]xplorer" },
             { "<leader>f", group = "[F]ind (local)" },
             { "<leader>g", group = "[G]it" },
+            { "<leader>j", group = "[J]upyter / Notebook" },
             { "<leader>p", group = "[P]ostman / API Client" },
             { "<leader>pr", desc = "  [P]ostman [R]un request (Telescope)" },
             { "<leader>pc", desc = "  [P]ostman select [C]ollection" },

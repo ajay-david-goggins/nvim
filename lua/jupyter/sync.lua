@@ -23,6 +23,15 @@ local function check_executable()
   return false
 end
 
+local function set_skeleton(bufnr)
+  local skeleton = {
+    "# %%",
+    "# New Jupyter Notebook",
+    "",
+  }
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, skeleton)
+end
+
 ---Read .ipynb file and convert into Python percent format buffer
 ---@param bufnr integer
 ---@param filepath string
@@ -33,35 +42,35 @@ function M.read_ipynb(bufnr, filepath)
 
   local fullpath = vim.fn.fnamemodify(filepath, ":p")
   local exists = vim.fn.filereadable(fullpath) == 1
+  local size = exists and vim.fn.getfsize(fullpath) or 0
 
-  if exists then
+  local loaded = false
+
+  if exists and size > 0 then
     local res = vim.system(
       { "jupytext", "--to", "py:percent", fullpath, "-o", "-" },
       { text = true }
     ):wait()
 
-    if res.code ~= 0 then
+    if res.code == 0 and res.stdout and res.stdout ~= "" then
+      local lines = vim.split(res.stdout, "\n", { plain = true })
+      if #lines > 0 and lines[#lines] == "" then
+        table.remove(lines)
+      end
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+      loaded = true
+    else
+      -- If jupytext failed on existing file (e.g. corrupted json)
       vim.notify(
-        "Failed to read notebook:\n" .. (res.stderr or ""),
-        vim.log.levels.ERROR,
-        { title = "Jupyter Read Error" }
+        "Notebook file is empty or invalid JSON; initialized blank notebook template.",
+        vim.log.levels.WARN,
+        { title = "Jupyter Read" }
       )
-      return
     end
+  end
 
-    local lines = vim.split(res.stdout, "\n", { plain = true })
-    if #lines > 0 and lines[#lines] == "" then
-      table.remove(lines)
-    end
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-  else
-    -- New notebook template
-    local skeleton = {
-      "# %%",
-      "# New Jupyter Notebook",
-      "",
-    }
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, skeleton)
+  if not loaded then
+    set_skeleton(bufnr)
   end
 
   -- Configure buffer attributes
@@ -76,6 +85,9 @@ function M.read_ipynb(bufnr, filepath)
   vim.bo[bufnr].undolevels = -1
   vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, {})
   vim.bo[bufnr].undolevels = ul
+
+  -- Trigger BufReadPost so treesitter, diagnostics, and LSP handlers attach
+  vim.api.nvim_exec_autocmds("BufReadPost", { buffer = bufnr })
 end
 
 ---Write Python percent format buffer back into .ipynb JSON format
@@ -88,27 +100,39 @@ function M.write_ipynb(bufnr, filepath)
 
   local fullpath = vim.fn.fnamemodify(filepath, ":p")
   local exists = vim.fn.filereadable(fullpath) == 1
+  local size = exists and vim.fn.getfsize(fullpath) or 0
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local content = table.concat(lines, "\n") .. "\n"
 
-  local cmd
-  if exists then
-    -- --update preserves existing notebook cell outputs, metadata, and execution counts!
-    cmd = { "jupytext", "--to", "ipynb", "--update", "-o", fullpath, "-" }
-  else
-    cmd = { "jupytext", "--to", "ipynb", "-o", fullpath, "-" }
+  local success = false
+  if exists and size > 0 then
+    -- Try --update first to preserve existing outputs, metadata, and execution counts
+    local res = vim.system(
+      { "jupytext", "--to", "ipynb", "--update", "-o", fullpath, "-" },
+      { stdin = content, text = true }
+    ):wait()
+    if res.code == 0 then
+      success = true
+    end
   end
 
-  local res = vim.system(cmd, { stdin = content, text = true }):wait()
-
-  if res.code ~= 0 then
-    vim.notify(
-      "Failed to write notebook:\n" .. (res.stderr or ""),
-      vim.log.levels.ERROR,
-      { title = "Jupyter Write Error" }
-    )
-    return
+  -- Fallback to fresh write if file didn't exist, was empty, or --update failed (corrupt JSON)
+  if not success then
+    local res = vim.system(
+      { "jupytext", "--to", "ipynb", "-o", fullpath, "-" },
+      { stdin = content, text = true }
+    ):wait()
+    if res.code == 0 then
+      success = true
+    else
+      vim.notify(
+        "Failed to write notebook:\n" .. (res.stderr or ""),
+        vim.log.levels.ERROR,
+        { title = "Jupyter Write Error" }
+      )
+      return
+    end
   end
 
   vim.bo[bufnr].modified = false

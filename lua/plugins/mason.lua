@@ -127,6 +127,22 @@ return {
           dap.configurations.python = {
             {
               type = "python",
+              request = "launch",
+              name = "FastAPI: Calone AI Service (Port 8001)",
+              module = "uvicorn",
+              args = { "main:app", "--host", "0.0.0.0", "--port", "8001" },
+              pythonPath = get_python,
+              console = "integratedTerminal",
+            },
+            {
+              type = "python",
+              request = "attach",
+              name = "Attach to FastAPI (Port 5679)",
+              connect = { host = "127.0.0.1", port = 5679 },
+              justMyCode = false,
+            },
+            {
+              type = "python",
               request = "attach",
               name = "Attach to Frappe",
               connect = { host = "127.0.0.1", port = 5678 },

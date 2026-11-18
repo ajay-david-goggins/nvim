@@ -24,7 +24,17 @@ end
 
 vim.lsp.config("*", {
   capabilities = capabilities,
-  root_markers = { ".git", "sites", "Procfile", "pyproject.toml", "package.json" },
+  root_markers = {
+    ".git",
+    "pyrightconfig.json",
+    "pyproject.toml",
+    "requirements.txt",
+    "requirement.txt",
+    ".venv",
+    "sites",
+    "Procfile",
+    "package.json",
+  },
 })
 
 -- Rounded floating windows everywhere (hover, signature help, diagnostics).

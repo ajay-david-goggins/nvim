@@ -55,6 +55,17 @@ local function find_bench_root(start_dir)
 end
 
 return {
+  root_markers = {
+    "pyrightconfig.json",
+    "pyproject.toml",
+    "setup.py",
+    "setup.cfg",
+    "requirements.txt",
+    "requirement.txt",
+    ".venv",
+    "env",
+    ".git",
+  },
   before_init = function(_, config)
     local cwd = config.root_dir or vim.fn.getcwd()
     local py, venv_root = find_venv_python(cwd)

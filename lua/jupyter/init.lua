@@ -34,10 +34,17 @@ function M.setup(opts)
     vim.g.jupyter_runner_target = opts.target
   end
 
+  -- Explicitly tell Neovim that .ipynb buffers represent Python code
+  vim.filetype.add({
+    extension = {
+      ipynb = "python",
+    },
+  })
+
   local augroup = vim.api.nvim_create_augroup("JupyterNativeSync", { clear = true })
 
-  -- Handle reading *.ipynb
-  vim.api.nvim_create_autocmd({ "BufReadCmd", "FileReadCmd" }, {
+  -- Handle reading *.ipynb (both existing and new notebooks)
+  vim.api.nvim_create_autocmd({ "BufReadCmd", "FileReadCmd", "BufNewFile" }, {
     group = augroup,
     pattern = "*.ipynb",
     callback = function(args)

@@ -4,6 +4,9 @@ vim.g.mapleader = " "
 
 K("n", "<Esc>", "<CMD>nohlsearch<CR>", { desc = "Remove search highlights" })
 K("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+K("t", "<C-[><C-[>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+K("t", "<C-[><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+K("t", "<Esc><C-[>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 
 K("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
 K("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
@@ -44,7 +47,7 @@ K("n", "<A-H>", ":vertical resize -2<CR>", { desc = "Make window right" })
 K("n", "<leader>tt", ":belowright split | resize 10 | terminal<CR>", { desc = "[T]iny [T]erminal", silent = true })
 
 -- Toggle background transparency (Transparent UI <-> Solid Dracula)
-K("n", "<leader>tb", function()
+local function toggle_transparency()
     local ok, transparent = pcall(require, "transparent")
     if ok then
         transparent.toggle()
@@ -56,10 +59,10 @@ K("n", "<leader>tb", function()
     else
         vim.notify("transparent.nvim not loaded", vim.log.levels.WARN)
     end
-end, { desc = "[T]oggle [B]ackground transparency" })
+end
 
--- Convenience alias: <leader>tr for Toggle Transparency
-K("n", "<leader>tr", "<leader>tb", { remap = true, desc = "[T]oggle T[r]ansparency" })
+K("n", "<leader>tr", toggle_transparency, { desc = "[T]oggle T[r]ansparency" })
+K("n", "<leader>tb", toggle_transparency, { desc = "[T]oggle [B]ackground transparency" })
 
 
 -- wrap text

@@ -1,5 +1,14 @@
 ---@type vim.lsp.Config
 return {
+  root_markers = {
+    "pyproject.toml",
+    "ruff.toml",
+    ".ruff.toml",
+    "requirements.txt",
+    "requirement.txt",
+    ".venv",
+    ".git",
+  },
   -- pyright owns hover/type-info; ruff only handles lint + fixes
   on_attach = function(client, _)
     client.server_capabilities.hoverProvider = false

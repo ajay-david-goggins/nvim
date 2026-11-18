@@ -29,6 +29,7 @@ return {
                 relativenumber = true,
             },
             renderer = {
+                highlight_opened_files = "all",
                 indent_markers = {
                     enable = true,
                 },
@@ -60,14 +61,25 @@ return {
             end,
         })
 
-        -- Your existing Autocmds for styling
+        -- High-contrast styling for transparent background over wallpapers
         vim.api.nvim_create_autocmd("FileType", {
             pattern = "NvimTree",
             callback = function()
-                vim.cmd("highlight NvimTreeLineNr guifg=#FFFFFF guibg=NONE")
-                vim.cmd("highlight NvimTreeCursorLineNr guifg=#87CEEB guibg=NONE")
+                vim.cmd("highlight NvimTreeLineNr guifg=#FFFFFF gui=bold guibg=NONE")
+                vim.cmd("highlight NvimTreeCursorLineNr guifg=#00FFFF gui=bold guibg=NONE")
                 vim.cmd("highlight NvimTreeCursorLine guibg=#2C2C2C")
-                vim.cmd("highlight NvimTreeIndentMarker guifg=#FFFFFF")
+                vim.cmd("highlight NvimTreeIndentMarker guifg=#6272A4")
+                vim.cmd("highlight NvimTreeOpenedFolderName guifg=#50FA7B gui=bold")
+                vim.cmd("highlight NvimTreeFolderName guifg=#00E5FF gui=bold")
+                vim.cmd("highlight NvimTreeFolderIcon guifg=#BD93F9 gui=bold")
+                vim.cmd("highlight NvimTreeOpenedFolderIcon guifg=#50FA7B gui=bold")
+                vim.cmd("highlight NvimTreeClosedFolderIcon guifg=#BD93F9 gui=bold")
+                vim.cmd("highlight NvimTreeRootFolder guifg=#FFD700 gui=bold")
+                vim.cmd("highlight NvimTreeOpenedHL guifg=#FFD700 gui=bold")
+                vim.cmd("highlight NvimTreeOpenedFile guifg=#FFD700 gui=bold")
+                vim.cmd("highlight NvimTreeFile guifg=#FFFFFF gui=bold")
+                vim.cmd("highlight NvimTreeExecFile guifg=#50FA7B gui=bold")
+                vim.cmd("highlight NvimTreeSpecialFile guifg=#FF79C6 gui=bold")
             end
         })
     end

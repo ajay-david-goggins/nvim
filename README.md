@@ -112,7 +112,7 @@ Leader key: **`<Space>`**
 | Keybinding | Mode | Description |
 | :--- | :---: | :--- |
 | `<Esc>` | `n` | Clear search highlights (`:nohlsearch`) |
-| `<Esc><Esc>` | `t` | Exit terminal mode to normal mode |
+| `<Esc><Esc>` / `<C-[><C-[>` | `t` | Exit terminal mode to normal mode |
 | `<C-h>` / `<C-j>` / `<C-k>` / `<C-l>` | `n` | Focus window left / down / up / right |
 | `<leader>wv` | `n` | Split window vertically (`:vsplit`) |
 | `<leader>wh` | `n` | Split window horizontally (`:split`) |

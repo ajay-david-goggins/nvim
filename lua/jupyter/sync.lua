@@ -60,12 +60,18 @@ function M.read_ipynb(bufnr, filepath)
       vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
       loaded = true
     else
-      -- If jupytext failed on existing file (e.g. corrupted json)
-      vim.notify(
-        "Notebook file is empty or invalid JSON; initialized blank notebook template.",
-        vim.log.levels.WARN,
-        { title = "Jupyter Read" }
-      )
+      -- If jupytext failed on existing file (e.g. corrupt JSON or plain text percent format)
+      local raw_lines = vim.fn.readfile(fullpath)
+      if #raw_lines > 0 and (raw_lines[1]:match("^# %%%%") or raw_lines[1]:match("^import") or raw_lines[1]:match("^from")) then
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, raw_lines)
+        loaded = true
+      else
+        vim.notify(
+          "Notebook file is empty or invalid JSON; initialized blank notebook template.",
+          vim.log.levels.WARN,
+          { title = "Jupyter Read" }
+        )
+      end
     end
   end
 
@@ -109,7 +115,7 @@ function M.write_ipynb(bufnr, filepath)
   if exists and size > 0 then
     -- Try --update first to preserve existing outputs, metadata, and execution counts
     local res = vim.system(
-      { "jupytext", "--to", "ipynb", "--update", "-o", fullpath, "-" },
+      { "jupytext", "--from", "py:percent", "--to", "ipynb", "--update", "-o", fullpath, "-" },
       { stdin = content, text = true }
     ):wait()
     if res.code == 0 then
@@ -119,20 +125,26 @@ function M.write_ipynb(bufnr, filepath)
 
   -- Fallback to fresh write if file didn't exist, was empty, or --update failed (corrupt JSON)
   if not success then
+    local tmp_file = vim.fn.tempname() .. ".ipynb"
     local res = vim.system(
-      { "jupytext", "--to", "ipynb", "-o", fullpath, "-" },
+      { "jupytext", "--from", "py:percent", "--to", "ipynb", "-o", tmp_file, "-" },
       { stdin = content, text = true }
     ):wait()
-    if res.code == 0 then
-      success = true
-    else
-      vim.notify(
-        "Failed to write notebook:\n" .. (res.stderr or ""),
-        vim.log.levels.ERROR,
-        { title = "Jupyter Write Error" }
-      )
-      return
+    if res.code == 0 and vim.fn.filereadable(tmp_file) == 1 then
+      local mv_res = vim.system({ "mv", "-f", tmp_file, fullpath }):wait()
+      if mv_res.code == 0 then
+        success = true
+      end
     end
+  end
+
+  if not success then
+    vim.notify(
+      "Failed to write notebook format to disk.",
+      vim.log.levels.ERROR,
+      { title = "Jupyter Write Error" }
+    )
+    return
   end
 
   vim.bo[bufnr].modified = false

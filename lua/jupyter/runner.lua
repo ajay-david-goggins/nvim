@@ -1,11 +1,11 @@
 -- =============================================================================
--- jupyter/runner.lua · Zero-Dependency Interactive Cell & REPL Execution
+-- jupyter/runner.lua · Interactive Cell Execution (Molten Kernel & REPL Fallback)
 --
 -- Features:
+-- - Primary backend: Molten Jupyter Kernel (true inline VS Code notebook output)
+-- - Automatic kernel detection and initialization
 -- - Code cell detection (# %% or # <codecell>)
--- - Native Neovim terminal REPL (auto-detects active virtualenv / conda / ipython)
--- - Safe code transmission via IPython %cpaste or bracketed paste (zero indentation bugs)
--- - Tmux pane integration (if inside tmux)
+-- - Fallback Neovim terminal REPL using clean bracketed paste (no %cpaste -q noise)
 -- - Cell navigation (next/prev) and insertion (above/below)
 -- =============================================================================
 
@@ -20,6 +20,44 @@ local state = {
   repl_job = nil,
   is_ipython = false,
 }
+
+---Check if Molten plugin is installed and available
+---@return boolean
+local function has_molten()
+  return vim.fn.exists(":MoltenInit") == 2
+end
+
+---Ensure a Molten kernel is initialized for the current buffer
+---@param bufnr? integer
+---@return boolean
+---Ensure a Molten kernel is initialized for the current buffer
+---@param bufnr? integer
+---@return boolean
+local function ensure_molten_kernel(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if vim.b[bufnr].molten_kernel_id then
+    return true
+  end
+
+  local runtime_dir = vim.fn.expand("~/.local/share/jupyter/runtime")
+  if vim.fn.isdirectory(runtime_dir) == 0 then
+    vim.fn.mkdir(runtime_dir, "p")
+  end
+
+  -- Check if a kernel is already running: reuse it to prevent ghost kernel pile-ups!
+  local running = vim.fn.MoltenRunningKernels()
+  if type(running) == "table" and #running > 0 then
+    pcall(vim.cmd, "MoltenInit shared " .. running[1])
+  else
+    vim.notify("󱐋 Initializing Jupyter kernel for notebook...", vim.log.levels.INFO, { title = "Jupyter" })
+    local ok = pcall(vim.cmd, "MoltenInit python3")
+    if not ok then
+      pcall(vim.cmd, "MoltenInit")
+    end
+  end
+
+  return vim.b[bufnr].molten_kernel_id ~= nil
+end
 
 ---Find Python binary from active venv, conda, upward traversal, or PATH
 ---@return string bin, boolean is_ipython
@@ -82,15 +120,13 @@ local function is_repl_alive()
   return false
 end
 
----Ensure the REPL terminal window and job are open
+---Ensure the fallback REPL terminal window and job are open
 ---@param focus? boolean
 ---@return integer? job_id
 local function ensure_repl(focus)
   if is_repl_alive() then
-    -- Check if window is visible
     local win_valid = state.repl_win and vim.api.nvim_win_is_valid(state.repl_win)
     if not win_valid then
-      -- Open window for the existing buffer
       vim.cmd("botright 12split")
       state.repl_win = vim.api.nvim_get_current_win()
       vim.api.nvim_win_set_buf(state.repl_win, state.repl_buf)
@@ -128,14 +164,14 @@ local function ensure_repl(focus)
   return state.repl_job
 end
 
----Send code block directly to REPL
+---Send code block directly to terminal REPL (fallback)
 ---@param code string
 function M.send_to_repl(code)
   if not code or code:match("^%s*$") then
     return
   end
 
-  -- Check if user is inside tmux and has requested tmux targeting
+  -- Tmux pane integration
   if vim.g.jupyter_runner_target == "tmux" and vim.env.TMUX then
     local target_pane = vim.g.jupyter_tmux_target or "{right-of}"
     vim.fn.system({ "tmux", "load-buffer", "-" }, code .. "\n")
@@ -143,23 +179,15 @@ function M.send_to_repl(code)
     return
   end
 
-  -- Default: Integrated Neovim Terminal REPL
   local job_id = ensure_repl(false)
   if not job_id then
     return
   end
 
-  if state.is_ipython then
-    -- IPython %cpaste handles multi-line blocks with zero indentation mangling
-    local payload = "%cpaste -q\n" .. code .. "\n--\n"
-    vim.api.nvim_chan_send(job_id, payload)
-  else
-    -- Standard Python bracketed paste mode
-    local payload = "\27[200~" .. code .. "\27[201~\n"
-    vim.api.nvim_chan_send(job_id, payload)
-  end
+  -- Use clean bracketed paste mode (NO %cpaste -q spam in REPL)
+  local payload = "\27[200~" .. code .. "\27[201~\n"
+  vim.api.nvim_chan_send(job_id, payload)
 
-  -- Auto-scroll terminal window to bottom
   if state.repl_win and vim.api.nvim_win_is_valid(state.repl_win) and state.repl_buf and vim.api.nvim_buf_is_valid(state.repl_buf) then
     local line_count = vim.api.nvim_buf_line_count(state.repl_buf)
     pcall(vim.api.nvim_win_set_cursor, state.repl_win, { line_count, 0 })
@@ -233,11 +261,29 @@ function M.run_cell()
     return
   end
 
+  -- 1. Preferred: Molten Jupyter Kernel (VS Code inline notebook style)
+  if has_molten() then
+    ensure_molten_kernel(bufnr)
+    -- Determine actual code range without empty outer edges
+    local eval_start = start_l
+    local first_line = vim.api.nvim_buf_get_lines(bufnr, start_l - 1, start_l, false)[1] or ""
+    if first_line:match(CELL_PATTERN) and start_l < end_l then
+      eval_start = start_l + 1
+    end
+
+    local ok, err = pcall(vim.fn.MoltenEvaluateRange, eval_start, end_l)
+    if not ok then
+      vim.notify("Molten evaluation failed: " .. tostring(err), vim.log.levels.ERROR, { title = "Jupyter" })
+    end
+    return
+  end
+
+  -- 2. Fallback: Terminal REPL
   local code = get_cell_code(bufnr, start_l, end_l)
   M.send_to_repl(code)
 end
 
----Run the current cell and advance to the next cell
+---Run the current cell and advance to the next cell (Shift+Enter behavior)
 function M.run_cell_and_move()
   M.run_cell()
   M.next_cell()
@@ -246,6 +292,13 @@ end
 ---Run the currently visually selected text or current line
 ---@param mode? string
 function M.run_selection(mode)
+  if has_molten() then
+    local bufnr = vim.api.nvim_get_current_buf()
+    ensure_molten_kernel(bufnr)
+    vim.cmd("MoltenEvaluateVisual")
+    return
+  end
+
   local bufnr = vim.api.nvim_get_current_buf()
   local code = ""
 
@@ -267,6 +320,13 @@ end
 
 ---Run the current line in normal mode
 function M.run_line()
+  if has_molten() then
+    local bufnr = vim.api.nvim_get_current_buf()
+    ensure_molten_kernel(bufnr)
+    vim.cmd("MoltenEvaluateLine")
+    return
+  end
+
   local cur_line = vim.api.nvim_win_get_cursor(0)[1]
   local line = vim.api.nvim_buf_get_lines(0, cur_line - 1, cur_line, false)[1] or ""
   M.send_to_repl(line)
@@ -325,7 +385,39 @@ function M.add_cell_above()
   vim.cmd("startinsert")
 end
 
----Toggle REPL window
+---Explicitly initialize a Jupyter kernel
+function M.init_kernel()
+  if has_molten() then
+    vim.cmd("MoltenInit")
+  else
+    M.toggle_repl()
+  end
+end
+
+---Open / focus floating output window
+function M.show_output()
+  if has_molten() then
+    pcall(vim.cmd, "noautocmd MoltenEnterOutput")
+  else
+    M.toggle_repl()
+  end
+end
+
+---Hide floating output window
+function M.hide_output()
+  if has_molten() then
+    pcall(vim.cmd, "MoltenHideOutput")
+  end
+end
+
+---Delete current cell execution output
+function M.delete_output()
+  if has_molten() then
+    pcall(vim.cmd, "MoltenDelete")
+  end
+end
+
+---Toggle terminal REPL window
 function M.toggle_repl()
   if is_repl_alive() and state.repl_win and vim.api.nvim_win_is_valid(state.repl_win) then
     vim.api.nvim_win_close(state.repl_win, true)
@@ -335,8 +427,15 @@ function M.toggle_repl()
   end
 end
 
----Restart REPL
+---Restart REPL or active kernel
 function M.restart_repl()
+  local bufnr = vim.api.nvim_get_current_buf()
+  if has_molten() and vim.b[bufnr].molten_kernel_id then
+    pcall(vim.cmd, "MoltenRestart!")
+    vim.notify("󰑐 Jupyter kernel restarted", vim.log.levels.INFO, { title = "Jupyter" })
+    return
+  end
+
   if state.repl_job then
     pcall(vim.fn.jobstop, state.repl_job)
     state.repl_job = nil

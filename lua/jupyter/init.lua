@@ -3,7 +3,7 @@
 --
 -- Exposes:
 -- - Bidirectional sync via sync.lua (BufReadCmd / BufWriteCmd for *.ipynb)
--- - REPL and cell evaluation via runner.lua
+-- - REPL and cell evaluation via runner.lua (Molten kernel + fallback REPL)
 -- =============================================================================
 
 local sync = require("jupyter.sync")
@@ -23,6 +23,10 @@ M.next_cell = runner.next_cell
 M.prev_cell = runner.prev_cell
 M.add_cell_above = runner.add_cell_above
 M.add_cell_below = runner.add_cell_below
+M.init_kernel = runner.init_kernel
+M.show_output = runner.show_output
+M.hide_output = runner.hide_output
+M.delete_output = runner.delete_output
 M.toggle_repl = runner.toggle_repl
 M.restart_repl = runner.restart_repl
 

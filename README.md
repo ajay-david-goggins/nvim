@@ -325,22 +325,26 @@ Leader key: **`<Space>`**
 
 ### 12. Jupyter Notebooks (`.ipynb`)
 
-Transparent two-way sync between `.ipynb` and clean Python (`# %%` percent format) with zero runtime bloat. Full Pyright, Ruff, and Treesitter support out of the box.
+Full VS Code-style Jupyter notebook experience powered by `molten-nvim` and `jupytext`. Connects directly to background Jupyter kernels (`ipykernel`) with **zero terminal `%cpaste` noise**, rendering execution output directly inline below each code cell.
 
 | Keybinding | Mode | Description |
 | :--- | :---: | :--- |
-| `<leader>jc` | `n` | Run current code cell in REPL |
+| `<leader>jc` | `n` | Run current code cell (Molten background kernel, inline output) |
 | `<leader>jn` | `n` | Run cell & advance to next cell (Shift+Enter workflow) |
-| `<leader>jl` | `n` | Run current line in REPL |
-| `<leader>jr` | `v` | Run visual selection in REPL |
+| `<leader>jl` | `n` | Run current line |
+| `<leader>jr` | `v` | Run visual selection |
+| `<leader>ji` | `n` | Initialize Jupyter kernel (`:MoltenInit`) |
+| `<leader>jo` | `n` | Open / focus floating output inspection window |
+| `<leader>jh` | `n` | Hide floating output window |
+| `<leader>jd` | `n` | Delete current cell execution output |
 | `<leader>ja` | `n` | Insert new cell (`# %%`) above |
 | `<leader>jb` | `n` | Insert new cell (`# %%`) below |
-| `<leader>jt` | `n` | Toggle / focus interactive REPL split |
-| `<leader>jk` | `n` | Restart REPL session |
+| `<leader>jt` | `n` | Toggle fallback terminal REPL split |
+| `<leader>jk` | `n` | Restart kernel / REPL session |
 | `]j` | `n` | Jump to next notebook cell |
 | `[j` | `n` | Jump to previous notebook cell |
 
-Commands: `:JupyterRunCell`, `:JupyterRunCellAndMove`, `:JupyterToggleRepl`, `:JupyterRestartRepl`
+Commands: `:JupyterRunCell`, `:JupyterRunCellAndMove`, `:JupyterInitKernel`, `:JupyterShowOutput`, `:JupyterHideOutput`, `:JupyterDeleteOutput`, `:JupyterToggleRepl`, `:JupyterRestartRepl`
 
 ---
 

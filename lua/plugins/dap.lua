@@ -24,7 +24,37 @@ return {
     { "<leader>dsO", function() require("dap").step_out() end,          desc = "  [D]ap [S]tep [O]ut" },
     { "<leader>dr",  function() require("dap").repl.open() end,         desc = "  [D]ap [R]epl open" },
     { "<leader>dl",  function() require("dap").run_last() end,          desc = "  [D]ap Run [L]ast" },
-    { "<leader>dq",  function() require("dap").terminate() end,         desc = "  [D]ap [Q]uit/terminate" },
+    {
+      "<leader>dq",
+      function()
+        local dap = require("dap")
+        local session = dap.session()
+        if session and session.config and session.config.request == "attach" then
+          dap.disconnect({ terminateDebuggee = false })
+          vim.notify("🔌 DAP detached cleanly. Server is still running!", vim.log.levels.INFO)
+        else
+          dap.terminate()
+        end
+        local ok, dapui = pcall(require, "dapui")
+        if ok then
+          dapui.close()
+        end
+      end,
+      desc = "  [D]ap [Q]uit (safe detach without killing server)",
+    },
+    {
+      "<leader>dx",
+      function()
+        local dap = require("dap")
+        dap.disconnect({ terminateDebuggee = false })
+        local ok, dapui = pcall(require, "dapui")
+        if ok then
+          dapui.close()
+        end
+        vim.notify("🔌 DAP disconnected. Server is still running!", vim.log.levels.INFO)
+      end,
+      desc = "  [D]ap Disconnect / Detach (keeps server alive)",
+    },
   },
 
   config = function()
